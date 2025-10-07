@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SessionProvider } from "@/components/providers/SessionProvider";
+import { QueryProvider } from "@/components/providers/QueryProvider";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 export const metadata: Metadata = {
@@ -52,9 +53,11 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <ErrorBoundary>
-          <SessionProvider>
-            {children}
-          </SessionProvider>
+          <QueryProvider>
+            <SessionProvider>
+              {children}
+            </SessionProvider>
+          </QueryProvider>
         </ErrorBoundary>
       </body>
     </html>
