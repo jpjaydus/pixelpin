@@ -1,0 +1,157 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String?
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Subscription fields
+  stripeCustomerId       String?
+  stripeSubscriptionId   String?
+  stripePriceId         String?
+  stripeCurrentPeriodEnd DateTime?
+
+  // Relations
+  accounts    Account[]
+  sessions    Session[]
+  projects    Project[]
+  annotations Annotation[]
+  replies     Reply[]
+
+  @@map("users")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  owner  User    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  assets Asset[]
+
+  @@map("projects")
+}
+
+model Asset {
+  id        String    @id @default(cuid())
+  name      String
+  type      AssetType
+  url       String
+  projectId String
+  createdAt DateTime  @default(now())
+
+  // Relations
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  annotations Annotation[]
+
+  @@map("assets")
+}
+
+model Annotation {
+  id        String           @id @default(cuid())
+  assetId   String
+  authorId  String
+  position  Json
+  content   String
+  type      AnnotationType
+  status    AnnotationStatus @default(OPEN)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  // Relations
+  asset   Asset   @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  replies Reply[]
+
+  @@map("annotations")
+}
+
+model Reply {
+  id           String   @id @default(cuid())
+  annotationId String
+  authorId     String
+  content      String
+  createdAt    DateTime @default(now())
+
+  // Relations
+  annotation Annotation @relation(fields: [annotationId], references: [id], onDelete: Cascade)
+  author     User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("replies")
+}
+
+enum AssetType {
+  IMAGE
+  PDF
+  URL
+}
+
+enum AnnotationType {
+  COMMENT
+  RECTANGLE
+  ARROW
+  TEXT
+}
+
+enum AnnotationStatus {
+  OPEN
+  RESOLVED
+}
