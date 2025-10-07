@@ -227,7 +227,7 @@ export default function AssetViewerPage() {
   }
 
   // Real-time collaboration
-  const { broadcastCursorMove, getPresenceMembers } = useRealtime({
+  const { getPresenceMembers } = useRealtime({
     assetId,
     onAnnotationCreated: (annotation) => {
       setRealtimeAnnotations(prev => [annotation, ...prev])

@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { checkAnnotationLimit } from '@/lib/subscription-limits'
-import { RealtimeService } from '@/lib/realtime'
+import { RealtimeService, AnnotationEvent } from '@/lib/realtime'
 
 const createAnnotationSchema = z.object({
   position: z.object({
@@ -171,7 +171,7 @@ export async function POST(
       createdAt: annotation.createdAt.toISOString(),
       updatedAt: annotation.updatedAt.toISOString(),
       position: annotation.position as { x: number; y: number; width?: number; height?: number },
-    } as any)
+    } as AnnotationEvent)
 
     return NextResponse.json(annotation, { status: 201 })
   } catch (error) {

@@ -10,6 +10,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    if (!pusherServer) {
+      return NextResponse.json({ error: 'Pusher not configured' }, { status: 503 })
+    }
+
     const body = await request.text()
     const params = new URLSearchParams(body)
     const socketId = params.get('socket_id')

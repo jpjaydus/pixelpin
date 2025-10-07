@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
-import { RealtimeService } from '@/lib/realtime'
+import { RealtimeService, AnnotationEvent } from '@/lib/realtime'
 
 const updateAnnotationSchema = z.object({
   content: z.string().min(1).optional(),
@@ -149,7 +149,7 @@ export async function PATCH(
       createdAt: annotation.createdAt.toISOString(),
       updatedAt: annotation.updatedAt.toISOString(),
       position: annotation.position as { x: number; y: number; width?: number; height?: number },
-    } as any)
+    } as AnnotationEvent)
 
     return NextResponse.json(annotation)
   } catch (error) {

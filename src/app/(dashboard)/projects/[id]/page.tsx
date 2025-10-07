@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
@@ -39,7 +39,7 @@ export default function ProjectDetailPage() {
   const [error, setError] = useState('');
 
   // Fetch project details
-  const fetchProject = async () => {
+  const fetchProject = useCallback(async () => {
     try {
       const response = await fetch(`/api/projects/${projectId}`);
       if (response.ok) {
@@ -56,7 +56,7 @@ export default function ProjectDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId]);
 
   // Fetch assets
   const fetchAssets = async () => {
@@ -75,7 +75,7 @@ export default function ProjectDetailPage() {
     if (session && projectId) {
       fetchProject();
     }
-  }, [session, projectId]); // fetchProject is stable, no need to include
+  }, [session, projectId, fetchProject]);
 
   const handleAssetUpload = () => {
     fetchAssets();

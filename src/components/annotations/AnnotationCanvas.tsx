@@ -35,7 +35,7 @@ export default function AnnotationCanvas({
   selectedTool,
   onAnnotationCreate,
   onAnnotationSelect,
-  selectedAnnotationId,
+
 }: AnnotationCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null)

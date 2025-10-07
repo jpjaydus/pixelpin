@@ -76,7 +76,7 @@ export function useRealtime({
   const presenceChannelRef = useRef<PresenceChannel | null>(null)
 
   useEffect(() => {
-    if (!session?.user?.id || !assetId) return
+    if (!session?.user?.id || !assetId || !pusherClient) return
 
     // Subscribe to asset channel for annotation updates
     const assetChannel = pusherClient.subscribe(getAssetChannel(assetId))
@@ -119,8 +119,10 @@ export function useRealtime({
       // Unbind all events and unsubscribe
       assetChannel.unbind_all()
       presenceChannel.unbind_all()
-      pusherClient.unsubscribe(getAssetChannel(assetId))
-      pusherClient.unsubscribe(getPresenceChannel(assetId))
+      if (pusherClient) {
+        pusherClient.unsubscribe(getAssetChannel(assetId))
+        pusherClient.unsubscribe(getPresenceChannel(assetId))
+      }
     }
   }, [
     session?.user?.id,

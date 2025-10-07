@@ -47,7 +47,7 @@ export function CreateProjectModal({ isOpen, onClose, onSubmit }: CreateProjectM
       // Reset form and close modal
       setFormData({ name: '', description: '' });
       onClose();
-    } catch (error: Error & { upgradeRequired?: boolean; limit?: number; currentCount?: number; message?: string }) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};
         error.issues.forEach((issue) => {
@@ -56,16 +56,20 @@ export function CreateProjectModal({ isOpen, onClose, onSubmit }: CreateProjectM
           }
         });
         setErrors(fieldErrors);
-      } else if (error.upgradeRequired) {
+      } else if (error && typeof error === 'object' && 'upgradeRequired' in error) {
         // Handle subscription limit error
+        const upgradeError = error as { upgradeRequired: boolean; limit: number; currentCount: number };
         setLimitInfo({
-          limit: error.limit,
-          currentCount: error.currentCount,
+          limit: upgradeError.limit,
+          currentCount: upgradeError.currentCount,
         });
         setShowUpgradeModal(true);
         onClose(); // Close the create modal
       } else {
-        setErrors({ general: error.message || 'Failed to create project. Please try again.' });
+        const errorMessage = error && typeof error === 'object' && 'message' in error 
+          ? (error as { message: string }).message 
+          : 'Failed to create project. Please try again.';
+        setErrors({ general: errorMessage });
       }
     } finally {
       setLoading(false);

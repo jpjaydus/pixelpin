@@ -6,6 +6,10 @@ import Stripe from 'stripe'
 
 export async function POST(request: NextRequest) {
   try {
+    if (!stripe) {
+      return NextResponse.json({ error: 'Stripe not configured' }, { status: 503 })
+    }
+
     const body = await request.text()
     const signature = (await headers()).get('stripe-signature')
 
@@ -68,7 +72,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
   const customerId = subscription.customer as string
   const subscriptionId = subscription.id
   const priceId = subscription.items.data[0]?.price.id
-  const currentPeriodEnd = new Date(subscription.current_period_end * 1000)
+  const currentPeriodEnd = new Date((subscription as Stripe.Subscription & { current_period_end: number }).current_period_end * 1000)
 
   await prisma.user.updateMany({
     where: {
@@ -103,11 +107,11 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 
 async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
   const customerId = invoice.customer as string
-  const subscriptionId = invoice.subscription as string
+  const subscriptionId = (invoice as Stripe.Invoice & { subscription: string }).subscription
 
   // Update subscription status if needed
-  if (subscriptionId) {
-    const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+  if (subscriptionId && stripe) {
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId as string)
     await handleSubscriptionUpdate(subscription)
   }
 

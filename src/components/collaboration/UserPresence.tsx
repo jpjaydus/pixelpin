@@ -48,10 +48,10 @@ export default function UserPresence({ users, currentUserId }: UserPresenceProps
               title={user.user_info.name || user.user_info.email}
             >
               {user.user_info.image ? (
-                <img
-                  src={user.user_info.image}
-                  alt={user.user_info.name || user.user_info.email}
-                  className="w-full h-full rounded-full object-cover"
+                <div
+                  style={{ backgroundImage: `url(${user.user_info.image})` }}
+                  className="w-full h-full rounded-full bg-cover bg-center"
+                  aria-label={user.user_info.name || user.user_info.email}
                 />
               ) : (
                 (user.user_info.name || user.user_info.email)[0].toUpperCase()
@@ -79,10 +79,10 @@ export default function UserPresence({ users, currentUserId }: UserPresenceProps
             >
               <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-sm font-medium text-white">
                 {user.user_info.image ? (
-                  <img
-                    src={user.user_info.image}
-                    alt={user.user_info.name || user.user_info.email}
-                    className="w-full h-full rounded-full object-cover"
+                  <div
+                    style={{ backgroundImage: `url(${user.user_info.image})` }}
+                    className="w-full h-full rounded-full bg-cover bg-center"
+                    aria-label={user.user_info.name || user.user_info.email}
                   />
                 ) : (
                   (user.user_info.name || user.user_info.email)[0].toUpperCase()

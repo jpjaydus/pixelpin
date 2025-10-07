@@ -48,6 +48,7 @@ export interface CursorEvent {
 export class RealtimeService {
   static async broadcastAnnotationCreated(assetId: string, annotation: AnnotationEvent) {
     try {
+      if (!pusherServer) return
       await pusherServer.trigger(
         getAssetChannel(assetId),
         PUSHER_EVENTS.ANNOTATION_CREATED,
@@ -60,6 +61,7 @@ export class RealtimeService {
 
   static async broadcastAnnotationUpdated(assetId: string, annotation: AnnotationEvent) {
     try {
+      if (!pusherServer) return
       await pusherServer.trigger(
         getAssetChannel(assetId),
         PUSHER_EVENTS.ANNOTATION_UPDATED,
@@ -72,6 +74,7 @@ export class RealtimeService {
 
   static async broadcastAnnotationDeleted(assetId: string, annotationId: string) {
     try {
+      if (!pusherServer) return
       await pusherServer.trigger(
         getAssetChannel(assetId),
         PUSHER_EVENTS.ANNOTATION_DELETED,
@@ -84,6 +87,7 @@ export class RealtimeService {
 
   static async broadcastReplyCreated(assetId: string, reply: ReplyEvent) {
     try {
+      if (!pusherServer) return
       await pusherServer.trigger(
         getAssetChannel(assetId),
         PUSHER_EVENTS.REPLY_CREATED,
@@ -96,6 +100,7 @@ export class RealtimeService {
 
   static async broadcastCursorMoved(assetId: string, cursor: CursorEvent) {
     try {
+      if (!pusherServer) return
       await pusherServer.trigger(
         getAssetChannel(assetId),
         PUSHER_EVENTS.CURSOR_MOVED,
