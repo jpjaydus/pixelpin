@@ -59,6 +59,14 @@ export default function ProjectsPage() {
 
     if (!response.ok) {
       const error = await response.json();
+      if (error.upgradeRequired) {
+        // Pass the error with upgrade info to the modal
+        const upgradeError = new Error(error.error || 'Failed to create project');
+        (upgradeError as Error & { upgradeRequired: boolean; limit: number; currentCount: number }).upgradeRequired = true;
+        (upgradeError as Error & { upgradeRequired: boolean; limit: number; currentCount: number }).limit = error.limit;
+        (upgradeError as Error & { upgradeRequired: boolean; limit: number; currentCount: number }).currentCount = error.currentCount;
+        throw upgradeError;
+      }
       throw new Error(error.error || 'Failed to create project');
     }
 

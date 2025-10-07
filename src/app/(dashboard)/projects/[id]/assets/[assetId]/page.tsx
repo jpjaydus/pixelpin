@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { ArrowLeft, Loader2 } from 'lucide-react'
@@ -8,6 +8,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import AnnotationCanvas from '@/components/annotations/AnnotationCanvas'
 import AnnotationToolbar from '@/components/annotations/AnnotationToolbar'
 import AnnotationPanel from '@/components/annotations/AnnotationPanel'
+import UserPresence from '@/components/collaboration/UserPresence'
+import { useRealtime } from '@/hooks/useRealtime'
 
 interface Asset {
   id: string
@@ -64,6 +66,16 @@ export default function AssetViewerPage() {
   
   const [selectedTool, setSelectedTool] = useState<'select' | 'comment' | 'rectangle' | 'arrow' | 'text'>('select')
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null)
+  const [onlineUsers, setOnlineUsers] = useState<Array<{
+    id: string
+    user_info: {
+      id: string
+      name: string
+      email: string
+      image?: string
+    }
+  }>>([])
+  const [realtimeAnnotations, setRealtimeAnnotations] = useState<Annotation[]>([])
 
   // Fetch asset details
   const { data: asset, isLoading: assetLoading, error: assetError } = useQuery({
@@ -185,6 +197,13 @@ export default function AssetViewerPage() {
     },
   })
 
+  // Initialize realtime annotations with fetched data
+  React.useEffect(() => {
+    if (annotations) {
+      setRealtimeAnnotations(annotations)
+    }
+  }, [annotations])
+
   const handleAnnotationCreate = (annotationData: {
     position: { x: number; y: number; width?: number; height?: number }
     content: string
@@ -206,6 +225,46 @@ export default function AssetViewerPage() {
   const handleReplyCreate = (annotationId: string, content: string) => {
     createReplyMutation.mutate({ annotationId, content })
   }
+
+  // Real-time collaboration
+  const { broadcastCursorMove, getPresenceMembers } = useRealtime({
+    assetId,
+    onAnnotationCreated: (annotation) => {
+      setRealtimeAnnotations(prev => [annotation, ...prev])
+    },
+    onAnnotationUpdated: (annotation) => {
+      setRealtimeAnnotations(prev => 
+        prev.map(a => a.id === annotation.id ? annotation : a)
+      )
+    },
+    onAnnotationDeleted: ({ id }) => {
+      setRealtimeAnnotations(prev => prev.filter(a => a.id !== id))
+      if (selectedAnnotationId === id) {
+        setSelectedAnnotationId(null)
+      }
+    },
+    onReplyCreated: (reply) => {
+      setRealtimeAnnotations(prev =>
+        prev.map(a => 
+          a.id === reply.annotationId 
+            ? { ...a, replies: [...a.replies, reply] }
+            : a
+        )
+      )
+    },
+    onUserJoined: (user) => {
+      setOnlineUsers(prev => [...prev, user])
+    },
+    onUserLeft: (user) => {
+      setOnlineUsers(prev => prev.filter(u => u.id !== user.id))
+    },
+  })
+
+  // Update online users from presence
+  React.useEffect(() => {
+    const members = getPresenceMembers()
+    setOnlineUsers(members)
+  }, [getPresenceMembers])
 
   if (assetLoading || annotationsLoading) {
     return (
@@ -250,10 +309,17 @@ export default function AssetViewerPage() {
             </div>
           </div>
           
-          <AnnotationToolbar
-            selectedTool={selectedTool}
-            onToolSelect={setSelectedTool}
-          />
+          <div className="flex items-center gap-4">
+            <AnnotationToolbar
+              selectedTool={selectedTool}
+              onToolSelect={setSelectedTool}
+            />
+            
+            <UserPresence
+              users={onlineUsers}
+              currentUserId={session?.user?.id || ''}
+            />
+          </div>
         </div>
       </div>
 
@@ -264,7 +330,7 @@ export default function AssetViewerPage() {
           <AnnotationCanvas
             assetUrl={asset.url}
             assetType={asset.type}
-            annotations={annotations}
+            annotations={realtimeAnnotations}
             selectedTool={selectedTool}
             onAnnotationCreate={handleAnnotationCreate}
             onAnnotationSelect={setSelectedAnnotationId}
@@ -274,7 +340,7 @@ export default function AssetViewerPage() {
 
         {/* Annotation Panel */}
         <AnnotationPanel
-          annotations={annotations}
+          annotations={realtimeAnnotations}
           selectedAnnotationId={selectedAnnotationId}
           onAnnotationSelect={setSelectedAnnotationId}
           onAnnotationUpdate={handleAnnotationUpdate}

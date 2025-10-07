@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { RealtimeService } from '@/lib/realtime'
 
 const updateAnnotationSchema = z.object({
   content: z.string().min(1).optional(),
@@ -140,6 +141,16 @@ export async function PATCH(
       },
     })
 
+    // Broadcast real-time event
+    await RealtimeService.broadcastAnnotationUpdated(existingAnnotation.assetId, {
+      ...annotation,
+      assetId: existingAnnotation.assetId,
+      authorId: existingAnnotation.authorId,
+      createdAt: annotation.createdAt.toISOString(),
+      updatedAt: annotation.updatedAt.toISOString(),
+      position: annotation.position as { x: number; y: number; width?: number; height?: number },
+    } as any)
+
     return NextResponse.json(annotation)
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -190,6 +201,9 @@ export async function DELETE(
         id: annotationId,
       },
     })
+
+    // Broadcast real-time event
+    await RealtimeService.broadcastAnnotationDeleted(existingAnnotation.assetId, annotationId)
 
     return NextResponse.json({ success: true })
   } catch (error) {

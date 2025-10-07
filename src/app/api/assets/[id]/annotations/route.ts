@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { checkAnnotationLimit } from '@/lib/subscription-limits'
+import { RealtimeService } from '@/lib/realtime'
 
 const createAnnotationSchema = z.object({
   position: z.object({
@@ -114,6 +116,21 @@ export async function POST(
       return NextResponse.json({ error: 'Asset not found' }, { status: 404 })
     }
 
+    // Check annotation limit
+    const limitCheck = await checkAnnotationLimit(session.user.id, asset.projectId);
+    if (!limitCheck.canCreate) {
+      return NextResponse.json(
+        { 
+          error: "Annotation limit reached",
+          limit: limitCheck.limit,
+          currentCount: limitCheck.currentCount,
+          plan: limitCheck.plan,
+          upgradeRequired: true
+        },
+        { status: 403 }
+      );
+    }
+
     const annotation = await prisma.annotation.create({
       data: {
         assetId,
@@ -145,6 +162,16 @@ export async function POST(
         },
       },
     })
+
+    // Broadcast real-time event
+    await RealtimeService.broadcastAnnotationCreated(assetId, {
+      ...annotation,
+      assetId,
+      authorId: session.user.id,
+      createdAt: annotation.createdAt.toISOString(),
+      updatedAt: annotation.updatedAt.toISOString(),
+      position: annotation.position as { x: number; y: number; width?: number; height?: number },
+    } as any)
 
     return NextResponse.json(annotation, { status: 201 })
   } catch (error) {

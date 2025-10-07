@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { RealtimeService } from '@/lib/realtime'
 
 const createReplySchema = z.object({
   content: z.string().min(1),
@@ -113,6 +114,13 @@ export async function POST(
         },
       },
     })
+
+    // Broadcast real-time event
+    await RealtimeService.broadcastReplyCreated(annotation.assetId, {
+      ...reply,
+      annotationId,
+      createdAt: reply.createdAt.toISOString(),
+    } as any)
 
     return NextResponse.json(reply, { status: 201 })
   } catch (error) {

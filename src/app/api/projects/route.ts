@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { checkProjectLimit } from "@/lib/subscription-limits";
 
 const createProjectSchema = z.object({
   name: z.string().min(1, "Project name is required").max(100, "Project name must be less than 100 characters"),
@@ -55,6 +56,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
+      );
+    }
+
+    // Check project limit
+    const limitCheck = await checkProjectLimit(session.user.id);
+    if (!limitCheck.canCreate) {
+      return NextResponse.json(
+        { 
+          error: "Project limit reached",
+          limit: limitCheck.limit,
+          currentCount: limitCheck.currentCount,
+          plan: limitCheck.plan,
+          upgradeRequired: true
+        },
+        { status: 403 }
       );
     }
 

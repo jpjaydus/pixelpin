@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import UpgradeModal from '@/components/subscriptions/UpgradeModal';
 
 const createProjectSchema = z.object({
   name: z.string().min(1, "Project name is required").max(100, "Project name must be less than 100 characters"),
@@ -24,6 +25,11 @@ export function CreateProjectModal({ isOpen, onClose, onSubmit }: CreateProjectM
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [limitInfo, setLimitInfo] = useState<{
+    limit: number;
+    currentCount: number;
+  } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +47,7 @@ export function CreateProjectModal({ isOpen, onClose, onSubmit }: CreateProjectM
       // Reset form and close modal
       setFormData({ name: '', description: '' });
       onClose();
-    } catch (error) {
+    } catch (error: Error & { upgradeRequired?: boolean; limit?: number; currentCount?: number; message?: string }) {
       if (error instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};
         error.issues.forEach((issue) => {
@@ -50,8 +56,16 @@ export function CreateProjectModal({ isOpen, onClose, onSubmit }: CreateProjectM
           }
         });
         setErrors(fieldErrors);
+      } else if (error.upgradeRequired) {
+        // Handle subscription limit error
+        setLimitInfo({
+          limit: error.limit,
+          currentCount: error.currentCount,
+        });
+        setShowUpgradeModal(true);
+        onClose(); // Close the create modal
       } else {
-        setErrors({ general: 'Failed to create project. Please try again.' });
+        setErrors({ general: error.message || 'Failed to create project. Please try again.' });
       }
     } finally {
       setLoading(false);
@@ -76,64 +90,74 @@ export function CreateProjectModal({ isOpen, onClose, onSubmit }: CreateProjectM
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Create New Project">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="Project Name"
-          name="name"
-          value={formData.name}
-          onChange={handleInputChange}
-          error={errors.name}
-          placeholder="Enter project name"
-          required
-        />
-        
-        <div className="space-y-1">
-          <label htmlFor="description" className="block text-sm font-medium text-neutral-700">
-            Description (Optional)
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            value={formData.description}
+    <>
+      <Modal isOpen={isOpen} onClose={handleClose} title="Create New Project">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            label="Project Name"
+            name="name"
+            value={formData.name}
             onChange={handleInputChange}
-            placeholder="Enter project description"
-            rows={3}
-            className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm placeholder:text-neutral-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed resize-none"
+            error={errors.name}
+            placeholder="Enter project name"
+            required
           />
-          {errors.description && (
-            <p className="text-sm text-red-600" role="alert">
-              {errors.description}
-            </p>
-          )}
-        </div>
-
-        {errors.general && (
-          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
-            {errors.general}
+          
+          <div className="space-y-1">
+            <label htmlFor="description" className="block text-sm font-medium text-neutral-700">
+              Description (Optional)
+            </label>
+            <textarea
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              placeholder="Enter project description"
+              rows={3}
+              className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm placeholder:text-neutral-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed resize-none"
+            />
+            {errors.description && (
+              <p className="text-sm text-red-600" role="alert">
+                {errors.description}
+              </p>
+            )}
           </div>
-        )}
 
-        <div className="flex gap-3 pt-4">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={handleClose}
-            disabled={loading}
-            className="flex-1"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            loading={loading}
-            className="flex-1"
-          >
-            Create Project
-          </Button>
-        </div>
-      </form>
-    </Modal>
+          {errors.general && (
+            <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+              {errors.general}
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-4">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleClose}
+              disabled={loading}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              loading={loading}
+              className="flex-1"
+            >
+              Create Project
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        reason="projects"
+        currentCount={limitInfo?.currentCount}
+        limit={limitInfo?.limit}
+      />
+    </>
   );
 }
