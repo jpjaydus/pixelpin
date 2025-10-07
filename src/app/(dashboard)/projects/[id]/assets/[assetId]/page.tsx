@@ -5,10 +5,8 @@ import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import AnnotationCanvas from '@/components/annotations/AnnotationCanvas'
 import AnnotationToolbar from '@/components/annotations/AnnotationToolbar'
-import AnnotationPanel from '@/components/annotations/AnnotationPanel'
-import UserPresence from '@/components/collaboration/UserPresence'
+import { LazyAnnotationCanvas, LazyAnnotationPanel, LazyUserPresence } from '@/components/LazyComponents'
 import { useRealtime } from '@/hooks/useRealtime'
 
 interface Asset {
@@ -315,7 +313,7 @@ export default function AssetViewerPage() {
               onToolSelect={setSelectedTool}
             />
             
-            <UserPresence
+            <LazyUserPresence
               users={onlineUsers}
               currentUserId={session?.user?.id || ''}
             />
@@ -327,7 +325,7 @@ export default function AssetViewerPage() {
       <div className="flex-1 flex overflow-hidden">
         {/* Canvas Area */}
         <div className="flex-1 p-6">
-          <AnnotationCanvas
+          <LazyAnnotationCanvas
             assetUrl={asset.url}
             assetType={asset.type}
             annotations={realtimeAnnotations}
@@ -339,7 +337,7 @@ export default function AssetViewerPage() {
         </div>
 
         {/* Annotation Panel */}
-        <AnnotationPanel
+        <LazyAnnotationPanel
           annotations={realtimeAnnotations}
           selectedAnnotationId={selectedAnnotationId}
           onAnnotationSelect={setSelectedAnnotationId}

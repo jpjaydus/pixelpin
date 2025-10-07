@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { ProjectCard } from '@/components/projects/ProjectCard';
 import { CreateProjectModal } from '@/components/projects/CreateProjectModal';
 import { EmptyState } from '@/components/projects/EmptyState';
+import { Loading } from '@/components/ui/Loading';
 import { Plus, Search } from 'lucide-react';
 
 interface Project {
@@ -106,14 +107,7 @@ export default function ProjectsPage() {
   if (loading) {
     return (
       <div className="p-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-neutral-200 rounded w-48 mb-6"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-48 bg-neutral-200 rounded-xl"></div>
-            ))}
-          </div>
-        </div>
+        <Loading size="lg" text="Loading your projects..." />
       </div>
     );
   }

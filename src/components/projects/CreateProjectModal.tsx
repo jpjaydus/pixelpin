@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import UpgradeModal from '@/components/subscriptions/UpgradeModal';
+import { LazyUpgradeModal } from '@/components/LazyComponents';
 
 const createProjectSchema = z.object({
   name: z.string().min(1, "Project name is required").max(100, "Project name must be less than 100 characters"),
@@ -155,7 +155,7 @@ export function CreateProjectModal({ isOpen, onClose, onSubmit }: CreateProjectM
         </form>
       </Modal>
 
-      <UpgradeModal
+      <LazyUpgradeModal
         isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
         reason="projects"
