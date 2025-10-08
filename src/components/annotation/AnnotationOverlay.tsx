@@ -123,15 +123,17 @@ export function AnnotationOverlay({
           onMouseMove={handleOverlayMouseMove}
           onMouseLeave={handleOverlayMouseLeave}
           style={{ 
-            backgroundColor: 'rgba(59, 130, 246, 0.1)', // More visible blue overlay to indicate comment mode
+            backgroundColor: 'rgba(59, 130, 246, 0.15)', // Even more visible blue overlay
             cursor: isCreatingAnnotation ? 'wait' : 'crosshair',
             pointerEvents: 'auto',
-            zIndex: 9999,
+            zIndex: 99999,
             position: 'absolute',
             top: 0,
             left: 0,
             right: 0,
-            bottom: 0
+            bottom: 0,
+            width: '100%',
+            height: '100%'
           }}
           title="Click anywhere to add annotation"
         />

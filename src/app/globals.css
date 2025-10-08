@@ -446,7 +446,7 @@ iewport Control Styles */
 
 /* Immersive Annotation View Styles */
 .viewport-container {
-  transition: all 0.3s ease-in-out;
+  /* No transitions to prevent flashing */
 }
 
 .viewport-desktop {
@@ -489,18 +489,6 @@ iewport Control Styles */
   position: relative;
 }
 
-.annotation-mode-active::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(59, 130, 246, 0.02);
-  pointer-events: none;
-  z-index: 1;
-}
-
 .browse-mode-active iframe {
   pointer-events: auto;
 }
@@ -509,9 +497,9 @@ iewport Control Styles */
   pointer-events: none;
 }
 
-/* Smooth transitions */
+/* No transitions to prevent flashing */
 .mode-transition {
-  transition: all 0.2s ease-in-out;
+  /* Removed all transitions */
 }
 
 /* Annotation pin styles */

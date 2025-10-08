@@ -25,7 +25,7 @@ const viewportHeights = {
 
 export const WebsiteIframe = forwardRef<HTMLIFrameElement, WebsiteIframeProps>(
   ({ url, viewport, mode, onLoad, onUrlChange }, ref) => {
-    const [isLoading, setIsLoading] = useState(true)
+    const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string>()
     const [currentUrl, setCurrentUrl] = useState(url)
     const [loadAttempts, setLoadAttempts] = useState(0)
@@ -149,15 +149,7 @@ export const WebsiteIframe = forwardRef<HTMLIFrameElement, WebsiteIframeProps>(
 
     return (
       <div className="w-full h-full flex items-center justify-center bg-gray-100">
-        {/* Loading State */}
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 z-10">
-            <div className="flex flex-col items-center space-y-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <p className="text-sm text-gray-600">Loading website...</p>
-            </div>
-          </div>
-        )}
+
 
         {/* Error State */}
         {error && (

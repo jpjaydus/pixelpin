@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
+import Link from 'next/link'
+import { ArrowLeftIcon } from 'lucide-react'
 import { Asset, Project } from '@prisma/client'
-import { FocusModeLayout } from './FocusModeLayout'
+
 import { AnnotationModeToggle } from './AnnotationModeToggle'
 import { ViewportControls } from './ViewportControls'
 import { WebsiteIframe } from './WebsiteIframe'
@@ -252,15 +254,17 @@ export function ImmersiveAnnotationView({
   }, [deleteAnnotation])
 
   return (
-    <FocusModeLayout
-      projectId={project.id}
-      assetId={asset.id}
-      showSidebar={showSidebar}
-      onToggleSidebar={handleToggleSidebar}
-    >
+    <div className="h-screen w-screen flex flex-col overflow-hidden bg-gray-50">
       {/* Top Header Bar */}
-      <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200 z-10">
+      <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200 z-10 flex-shrink-0">
         <div className="flex items-center space-x-4">
+          <Link 
+            href={`/projects/${project.id}`}
+            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+            title="Back to project"
+          >
+            <ArrowLeftIcon className="w-5 h-5" />
+          </Link>
           <h1 className="text-lg font-semibold text-gray-900 truncate">
             {asset.name}
           </h1>
@@ -448,6 +452,6 @@ export function ImmersiveAnnotationView({
           onToggleVisibility={() => setShowPresence(!showPresence)}
         />
       )}
-    </FocusModeLayout>
+    </div>
   )
 }
