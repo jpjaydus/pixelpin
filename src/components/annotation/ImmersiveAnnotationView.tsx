@@ -8,7 +8,9 @@ import { ViewportControls } from './ViewportControls'
 import { WebsiteIframe } from './WebsiteIframe'
 import { AnnotationOverlay } from './AnnotationOverlay'
 import { AnnotationSidebar } from './AnnotationSidebar'
+import { CollaboratorPresence } from './CollaboratorPresence'
 import { useAnnotations } from '@/hooks/useAnnotations'
+import { useRealtime } from '@/hooks/useRealtime'
 import { captureScreenshot } from '@/lib/screenshot'
 import { collectBrowserMetadata } from '@/lib/browser-metadata'
 import { saveUrlState, loadUrlState } from '@/lib/url-state'
@@ -34,12 +36,16 @@ interface ImmersiveAnnotationViewProps {
     email?: string | null
     image?: string | null
   }
+  isGuest?: boolean
+  guestToken?: string
 }
 
 export function ImmersiveAnnotationView({
   asset,
   project,
-  currentUser
+  currentUser,
+  isGuest = false,
+  guestToken
 }: ImmersiveAnnotationViewProps) {
   // Load saved state or use defaults
   const savedState = loadUrlState(asset.id)
@@ -48,6 +54,25 @@ export function ImmersiveAnnotationView({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [currentMode, setCurrentMode] = useState<AnnotationMode>(savedState?.mode || 'COMMENT')
   const [currentViewport, setCurrentViewport] = useState<ViewportType>(savedState?.viewport || 'DESKTOP')
+  
+  // Real-time collaboration state
+  const [collaboratorCursors, setCollaboratorCursors] = useState<Map<string, {
+    userId: string
+    userName: string
+    x: number
+    y: number
+    timestamp: number
+  }>>(new Map())
+  const [onlineCollaborators, setOnlineCollaborators] = useState<Array<{
+    id: string
+    user_info: {
+      id: string
+      name: string
+      email: string
+      image?: string
+    }
+  }>>([])
+  const [showPresence, setShowPresence] = useState(true)
   const [selectedAnnotation, setSelectedAnnotation] = useState<string>()
   
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -80,11 +105,64 @@ export function ImmersiveAnnotationView({
     annotations,
     createAnnotation,
     updateAnnotation,
-    deleteAnnotation
+    deleteAnnotation,
+    addReply
   } = useAnnotations(asset.id, currentUrl)
 
+  // Real-time collaboration
+  const { broadcastCursorMove, getPresenceMembers } = useRealtime({
+    assetId: asset.id,
+    onAnnotationCreated: (annotation) => {
+      // Annotation will be automatically added by useAnnotations
+      // Show notification for new annotations from other users
+      if (annotation.author.id !== currentUser.id) {
+        // You could add a toast notification here
+        console.log('New annotation from', annotation.author.name)
+      }
+    },
+    onAnnotationUpdated: (annotation) => {
+      // Annotation will be automatically updated by useAnnotations
+      if (annotation.author.id !== currentUser.id) {
+        console.log('Annotation updated by', annotation.author.name)
+      }
+    },
+    onAnnotationDeleted: (data) => {
+      // Annotation will be automatically removed by useAnnotations
+      console.log('Annotation deleted:', data.id)
+    },
+    onCursorMoved: (cursor) => {
+      if (cursor.userId !== currentUser.id) {
+        setCollaboratorCursors(prev => {
+          const newCursors = new Map(prev)
+          newCursors.set(cursor.userId, {
+            ...cursor,
+            timestamp: Date.now()
+          })
+          return newCursors
+        })
+      }
+    },
+    onUserJoined: (user) => {
+      setOnlineCollaborators(prev => [...prev, user])
+    },
+    onUserLeft: (user) => {
+      setOnlineCollaborators(prev => prev.filter(u => u.id !== user.id))
+      setCollaboratorCursors(prev => {
+        const newCursors = new Map(prev)
+        newCursors.delete(user.id)
+        return newCursors
+      })
+    }
+  })
+
+  const [isCreatingAnnotation, setIsCreatingAnnotation] = useState(false)
+  const [annotationError, setAnnotationError] = useState<string>()
+
   const handleCreateAnnotation = useCallback(async (position: { x: number; y: number }) => {
-    if (!iframeRef.current) return
+    if (!iframeRef.current || isCreatingAnnotation) return
+
+    setIsCreatingAnnotation(true)
+    setAnnotationError(undefined)
 
     try {
       // Capture screenshot and metadata
@@ -92,18 +170,26 @@ export function ImmersiveAnnotationView({
       const metadata = collectBrowserMetadata()
 
       // Create annotation with professional context
-      await createAnnotation({
+      const newAnnotation = await createAnnotation({
         position,
         content: '', // Will be filled in by the annotation form
         screenshot: screenshotResult.url,
         pageUrl: currentUrl,
         metadata
       })
+
+      // Auto-select the newly created annotation
+      if (newAnnotation?.id) {
+        setSelectedAnnotation(newAnnotation.id)
+      }
+
     } catch (error) {
       console.error('Failed to create annotation:', error)
-      // Could show error toast here
+      setAnnotationError(error instanceof Error ? error.message : 'Failed to create annotation')
+    } finally {
+      setIsCreatingAnnotation(false)
     }
-  }, [currentUrl, createAnnotation])
+  }, [currentUrl, createAnnotation, isCreatingAnnotation])
 
   const handleModeChange = useCallback((mode: AnnotationMode) => {
     setCurrentMode(mode)
@@ -136,6 +222,24 @@ export function ImmersiveAnnotationView({
   const handleSidebarCollapse = useCallback(() => {
     setSidebarCollapsed(!sidebarCollapsed)
   }, [sidebarCollapsed])
+
+  const handleBulkUpdate = useCallback(async (ids: string[], data: { status?: 'OPEN' | 'RESOLVED' }) => {
+    try {
+      // Update annotations in parallel
+      await Promise.all(ids.map(id => updateAnnotation(id, data)))
+    } catch (error) {
+      console.error('Failed to bulk update annotations:', error)
+    }
+  }, [updateAnnotation])
+
+  const handleBulkDelete = useCallback(async (ids: string[]) => {
+    try {
+      // Delete annotations in parallel
+      await Promise.all(ids.map(id => deleteAnnotation(id)))
+    } catch (error) {
+      console.error('Failed to bulk delete annotations:', error)
+    }
+  }, [deleteAnnotation])
 
   return (
     <FocusModeLayout
@@ -229,6 +333,7 @@ export function ImmersiveAnnotationView({
             currentPageUrl={currentUrl}
             viewport={currentViewport}
             iframeRef={iframeRef}
+            onCursorMove={broadcastCursorMove}
           />
         </div>
 
@@ -240,13 +345,40 @@ export function ImmersiveAnnotationView({
             annotations={annotations}
             selectedAnnotation={selectedAnnotation}
             onAnnotationSelect={setSelectedAnnotation}
-            onAnnotationResolve={(id: string) => updateAnnotation(id, { status: 'RESOLVED' })}
+            onAnnotationUpdate={updateAnnotation}
             onAnnotationDelete={deleteAnnotation}
+            onAddReply={addReply}
+            onBulkUpdate={handleBulkUpdate}
+            onBulkDelete={handleBulkDelete}
+            onNavigateToAnnotation={(id) => {
+              setSelectedAnnotation(id)
+              // Scroll to annotation pin
+              const annotation = annotations.find(a => a.id === id)
+              if (annotation && iframeRef.current) {
+                // Smooth scroll to annotation position
+                const pin = document.querySelector(`[data-annotation-id="${id}"]`)
+                if (pin) {
+                  pin.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                }
+              }
+            }}
             currentUser={currentUser}
-            projectCollaborators={project.collaborators.map(c => c.user)}
+            projectCollaborators={project.collaborators?.map(c => c.user) || []}
+            currentPageUrl={currentUrl}
           />
         )}
       </div>
+
+      {/* Collaborator Presence */}
+      {!isGuest && (
+        <CollaboratorPresence
+          cursors={collaboratorCursors}
+          onlineCollaborators={onlineCollaborators}
+          currentUserId={currentUser.id}
+          isVisible={showPresence}
+          onToggleVisibility={() => setShowPresence(!showPresence)}
+        />
+      )}
     </FocusModeLayout>
   )
 }

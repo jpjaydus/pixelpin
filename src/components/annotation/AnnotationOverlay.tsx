@@ -19,6 +19,7 @@ interface AnnotationOverlayProps {
   currentPageUrl: string
   viewport?: 'DESKTOP' | 'TABLET' | 'MOBILE'
   iframeRef?: React.RefObject<HTMLIFrameElement>
+  onCursorMove?: (x: number, y: number) => void
 }
 
 export function AnnotationOverlay({
@@ -29,7 +30,8 @@ export function AnnotationOverlay({
   selectedAnnotation,
   currentPageUrl,
   viewport = 'DESKTOP',
-  iframeRef
+  iframeRef,
+  onCursorMove
 }: AnnotationOverlayProps) {
   const [isCreatingAnnotation, setIsCreatingAnnotation] = useState(false)
   const [hoverPosition, setHoverPosition] = useState<{ x: number; y: number } | null>(null)
@@ -80,6 +82,11 @@ export function AnnotationOverlay({
 
     const coordinates = getRelativeCoordinates(event)
     setHoverPosition(coordinates)
+    
+    // Broadcast cursor position for real-time collaboration
+    if (onCursorMove && coordinates) {
+      onCursorMove(coordinates.x, coordinates.y)
+    }
   }
 
   const handleOverlayMouseLeave = () => {

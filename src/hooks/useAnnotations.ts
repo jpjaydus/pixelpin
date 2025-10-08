@@ -32,6 +32,8 @@ interface CreateAnnotationData {
   screenshot: string
   pageUrl: string
   metadata: any
+  mentions?: string[]
+  attachments?: any[]
 }
 
 export function useAnnotations(assetId: string, currentUrl: string) {
@@ -111,6 +113,47 @@ export function useAnnotations(assetId: string, currentUrl: string) {
     }
   }
 
+  const addReply = async (annotationId: string, data: {
+    content: string
+    attachments?: {
+      id: string
+      filename: string
+      url: string
+      fileType: string
+      fileSize: number
+    }[]
+  }) => {
+    try {
+      const response = await fetch(`/api/annotations/${annotationId}/replies`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to add reply')
+      }
+
+      const newReply = await response.json()
+      
+      // Update the annotation with the new reply
+      setAnnotations(prev => 
+        prev.map(annotation => 
+          annotation.id === annotationId 
+            ? { ...annotation, replies: [...(annotation.replies || []), newReply] }
+            : annotation
+        )
+      )
+      
+      return newReply
+    } catch (error) {
+      console.error('Error adding reply:', error)
+      throw error
+    }
+  }
+
   // Load annotations on mount
   useEffect(() => {
     const loadAnnotations = async () => {
@@ -142,6 +185,7 @@ export function useAnnotations(assetId: string, currentUrl: string) {
     error,
     createAnnotation,
     updateAnnotation,
-    deleteAnnotation
+    deleteAnnotation,
+    addReply
   }
 }

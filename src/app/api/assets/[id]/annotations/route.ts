@@ -24,6 +24,13 @@ const createAnnotationSchema = z.object({
     userAgent: z.string(),
     timestamp: z.string(),
   }),
+  attachments: z.array(z.object({
+    id: z.string(),
+    filename: z.string(),
+    url: z.string().url(),
+    fileType: z.string(),
+    fileSize: z.number(),
+  })).optional(),
 })
 
 export async function GET(
@@ -65,6 +72,7 @@ export async function GET(
             image: true,
           },
         },
+        attachments: true,
         replies: {
           include: {
             author: {
@@ -75,6 +83,7 @@ export async function GET(
                 image: true,
               },
             },
+            attachments: true,
           },
           orderBy: {
             createdAt: 'asc',
@@ -150,6 +159,14 @@ export async function POST(
         screenshot: validatedData.screenshot,
         pageUrl: validatedData.pageUrl,
         metadata: validatedData.metadata,
+        attachments: validatedData.attachments ? {
+          create: validatedData.attachments.map(att => ({
+            filename: att.filename,
+            url: att.url,
+            mimeType: att.fileType,
+            size: att.fileSize,
+          }))
+        } : undefined,
       },
       include: {
         author: {
@@ -160,6 +177,7 @@ export async function POST(
             image: true,
           },
         },
+        attachments: true,
         replies: {
           include: {
             author: {
@@ -170,6 +188,7 @@ export async function POST(
                 image: true,
               },
             },
+            attachments: true,
           },
         },
       },
