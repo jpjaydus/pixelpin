@@ -62,8 +62,8 @@ export function ImmersiveAnnotationView({
   
   const [showSidebar, setShowSidebar] = useState(true)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [currentMode, setCurrentMode] = useState<AnnotationMode>(savedState?.mode || 'COMMENT')
-  const [currentViewport, setCurrentViewport] = useState<ViewportType>(savedState?.viewport || 'DESKTOP')
+  const [currentMode, setCurrentMode] = useState<AnnotationMode>('COMMENT')
+  const [currentViewport, setCurrentViewport] = useState<ViewportType>('DESKTOP')
   
   // Real-time collaboration state
   const [collaboratorCursors, setCollaboratorCursors] = useState<Map<string, {
@@ -318,7 +318,7 @@ export function ImmersiveAnnotationView({
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex immersive-container">
         {/* Website Iframe Container */}
         <div className={`
           flex-1 relative mode-transition

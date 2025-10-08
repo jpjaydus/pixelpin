@@ -17,6 +17,12 @@ const viewportWidths = {
   MOBILE: '390px'
 }
 
+const viewportHeights = {
+  DESKTOP: '100%',
+  TABLET: '1024px',
+  MOBILE: '844px'
+}
+
 export const WebsiteIframe = forwardRef<HTMLIFrameElement, WebsiteIframeProps>(
   ({ url, viewport, mode, onLoad, onUrlChange }, ref) => {
     const [isLoading, setIsLoading] = useState(true)
@@ -197,18 +203,18 @@ export const WebsiteIframe = forwardRef<HTMLIFrameElement, WebsiteIframeProps>(
         )}
 
         {/* Iframe Container with Viewport Control */}
-        <div className="h-full viewport-container mx-auto flex justify-center items-center">
+        <div className="h-full w-full flex justify-center">
           <div
             className={`
               h-full bg-white relative
-              ${viewport === 'DESKTOP' ? 'viewport-desktop' : ''}
+              ${viewport === 'DESKTOP' ? 'w-full' : ''}
               ${viewport === 'TABLET' ? 'viewport-tablet' : ''}
               ${viewport === 'MOBILE' ? 'viewport-mobile' : ''}
-              viewport-transition
             `}
             style={{ 
-              width: viewportWidths[viewport],
-              maxWidth: '100%'
+              width: viewport === 'DESKTOP' ? '100%' : viewportWidths[viewport],
+              maxWidth: viewport === 'DESKTOP' ? '100%' : viewportWidths[viewport],
+              height: '100%'
             }}
           >
             {/* Viewport Indicator */}
@@ -223,14 +229,14 @@ export const WebsiteIframe = forwardRef<HTMLIFrameElement, WebsiteIframeProps>(
               src={url}
               className="w-full h-full border-0 bg-white"
               style={{
-                borderRadius: viewport !== 'DESKTOP' ? (viewport === 'MOBILE' ? '12px' : '8px') : '0'
+                borderRadius: viewport !== 'DESKTOP' ? (viewport === 'MOBILE' ? '12px' : '8px') : '0',
+                pointerEvents: 'auto'
               }}
               onLoad={handleLoad}
               onError={handleError}
-              sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation"
+              sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation allow-modals"
               title="Website Preview"
               referrerPolicy="strict-origin-when-cross-origin"
-              loading="lazy"
             />
           </div>
         </div>

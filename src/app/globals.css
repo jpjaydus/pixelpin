@@ -443,3 +443,100 @@ iewport Control Styles */
 .viewport-container:hover .viewport-indicator {
   opacity: 1;
 }
+
+/* Immersive Annotation View Styles */
+.viewport-container {
+  transition: all 0.3s ease-in-out;
+}
+
+.viewport-desktop {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.viewport-tablet {
+  width: 768px !important;
+  max-width: 768px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.viewport-mobile {
+  width: 390px !important;
+  max-width: 390px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.viewport-indicator {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  z-index: 10;
+}
+
+/* Annotation Mode Styles */
+.annotation-mode-active {
+  position: relative;
+}
+
+.annotation-mode-active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(59, 130, 246, 0.02);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.browse-mode-active iframe {
+  pointer-events: auto;
+}
+
+.annotation-mode-active iframe {
+  pointer-events: none;
+}
+
+/* Smooth transitions */
+.mode-transition {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Annotation pin styles */
+.annotation-pin {
+  transition: all 0.2s ease-in-out;
+  backdrop-filter: blur(4px);
+}
+
+.annotation-pin:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+  z-index: 25 !important;
+}
+
+/* Prevent iframe flashing */
+iframe {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Ensure proper scrolling */
+.immersive-container {
+  overflow: auto;
+  height: 100vh;
+}
+
+.immersive-container iframe {
+  min-height: 100%;
+}

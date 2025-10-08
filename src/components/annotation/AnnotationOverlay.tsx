@@ -67,6 +67,10 @@ export function AnnotationOverlay({
     const target = event.target as HTMLElement
     if (target.closest('.annotation-pin')) return
 
+    // Prevent event bubbling to iframe
+    event.preventDefault()
+    event.stopPropagation()
+
     const coordinates = getRelativeCoordinates(event)
     if (coordinates) {
       setIsCreatingAnnotation(true)
@@ -114,15 +118,16 @@ export function AnnotationOverlay({
       {isActive && (
         <div
           ref={overlayRef}
-          className="absolute inset-0 z-10 cursor-crosshair"
+          className="absolute inset-0 z-10"
           onClick={handleOverlayClick}
           onMouseMove={handleOverlayMouseMove}
           onMouseLeave={handleOverlayMouseLeave}
           style={{ 
-            backgroundColor: 'rgba(0, 0, 0, 0.01)', // Nearly transparent overlay
-            cursor: isCreatingAnnotation ? 'wait' : 'crosshair'
+            backgroundColor: 'rgba(59, 130, 246, 0.05)', // Subtle blue overlay to indicate comment mode
+            cursor: isCreatingAnnotation ? 'wait' : 'crosshair',
+            pointerEvents: 'auto'
           }}
-          title="Click to add annotation"
+          title="Click anywhere to add annotation"
         />
       )}
 

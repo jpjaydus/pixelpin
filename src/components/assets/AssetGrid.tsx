@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
-import { FileImage, FileText, ExternalLink, MoreHorizontal, Trash2, Eye } from 'lucide-react';
+import { FileImage, FileText, ExternalLink, MoreHorizontal, Trash2, Eye, MessageSquare } from 'lucide-react';
 
 interface Asset {
   id: string;
@@ -190,21 +190,19 @@ export function AssetGrid({ assets, projectId, onDelete }: AssetGridProps) {
             </div>
 
             {/* Action Buttons */}
-            <div className="mt-3 space-y-2">
-              <Link href={`/projects/${projectId}/assets/${asset.id}`} className="block">
-                <Button variant="outline" size="sm" className="w-full">
-                  <Eye className="h-4 w-4 mr-2" />
-                  View Asset
-                </Button>
-              </Link>
-              
-              {asset.type === 'URL' && (
+            <div className="mt-3">
+              {asset.type === 'URL' ? (
                 <Link href={`/projects/${projectId}/assets/${asset.id}/immersive`} className="block">
+                  <Button variant="outline" size="sm" className="w-full bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100">
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Leave Feedback
+                  </Button>
+                </Link>
+              ) : (
+                <Link href={`/projects/${projectId}/assets/${asset.id}`} className="block">
                   <Button variant="outline" size="sm" className="w-full">
-                    <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
-                    </svg>
-                    Immersive Mode
+                    <Eye className="h-4 w-4 mr-2" />
+                    View Asset
                   </Button>
                 </Link>
               )}
