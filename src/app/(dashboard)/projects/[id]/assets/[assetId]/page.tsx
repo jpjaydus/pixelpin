@@ -267,7 +267,7 @@ export default function AssetViewerPage() {
   // Redirect URL assets to immersive annotation interface
   useEffect(() => {
     if (asset && asset.type === 'URL') {
-      router.replace(`/annotation/${projectId}/${assetId}`)
+      router.replace(`/projects/${projectId}/assets/${assetId}/immersive`)
     }
   }, [asset, projectId, assetId, router])
 
@@ -319,6 +319,19 @@ export default function AssetViewerPage() {
               selectedTool={selectedTool}
               onToolSelect={setSelectedTool}
             />
+            
+            {/* Immersive Mode Button for URL assets */}
+            {asset.type === 'URL' && (
+              <button
+                onClick={() => router.push(`/projects/${projectId}/assets/${assetId}/immersive`)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
+                </svg>
+                Immersive Mode
+              </button>
+            )}
             
             <LazyUserPresence
               users={onlineUsers}

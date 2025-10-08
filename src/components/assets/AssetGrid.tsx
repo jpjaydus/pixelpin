@@ -151,16 +151,28 @@ export function AssetGrid({ assets, projectId, onDelete }: AssetGridProps) {
                       View
                     </Link>
                     {asset.type === 'URL' && (
-                      <a
-                        href={asset.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 w-full px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
-                        onClick={() => setActiveDropdown(null)}
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        Open URL
-                      </a>
+                      <>
+                        <Link
+                          href={`/projects/${projectId}/assets/${asset.id}/immersive`}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                          onClick={() => setActiveDropdown(null)}
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
+                          </svg>
+                          Immersive Mode
+                        </Link>
+                        <a
+                          href={asset.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+                          onClick={() => setActiveDropdown(null)}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Open URL
+                        </a>
+                      </>
                     )}
                     <button
                       onClick={() => {
@@ -177,13 +189,26 @@ export function AssetGrid({ assets, projectId, onDelete }: AssetGridProps) {
               </div>
             </div>
 
-            {/* View Button */}
-            <Link href={`/projects/${projectId}/assets/${asset.id}`} className="block mt-3">
-              <Button variant="outline" size="sm" className="w-full">
-                <Eye className="h-4 w-4 mr-2" />
-                View Asset
-              </Button>
-            </Link>
+            {/* Action Buttons */}
+            <div className="mt-3 space-y-2">
+              <Link href={`/projects/${projectId}/assets/${asset.id}`} className="block">
+                <Button variant="outline" size="sm" className="w-full">
+                  <Eye className="h-4 w-4 mr-2" />
+                  View Asset
+                </Button>
+              </Link>
+              
+              {asset.type === 'URL' && (
+                <Link href={`/projects/${projectId}/assets/${asset.id}/immersive`} className="block">
+                  <Button variant="default" size="sm" className="w-full">
+                    <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9" />
+                    </svg>
+                    Immersive Mode
+                  </Button>
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       ))}

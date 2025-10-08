@@ -5,6 +5,45 @@ import { z } from 'zod'
 import { checkAnnotationLimit } from '@/lib/subscription-limits'
 import { RealtimeService, AnnotationEvent } from '@/lib/realtime'
 
+// CSV export utility
+function generateAnnotationCSV(annotations: any[], asset: any): string {
+  const headers = [
+    'ID',
+    'Content',
+    'Status',
+    'Author',
+    'Author Email',
+    'Guest Name',
+    'Guest Email',
+    'Page URL',
+    'Position X',
+    'Position Y',
+    'Created At',
+    'Updated At',
+    'Replies Count',
+    'Attachments Count'
+  ]
+
+  const rows = annotations.map(annotation => [
+    annotation.id,
+    `"${annotation.content.replace(/"/g, '""')}"`,
+    annotation.status,
+    annotation.author?.name || '',
+    annotation.author?.email || '',
+    annotation.guestName || '',
+    annotation.guestEmail || '',
+    annotation.pageUrl,
+    annotation.position.x,
+    annotation.position.y,
+    annotation.createdAt,
+    annotation.updatedAt,
+    annotation.replies?.length || 0,
+    annotation.attachments?.length || 0
+  ])
+
+  return [headers.join(','), ...rows.map(row => row.join(','))].join('\n')
+}
+
 const createAnnotationSchema = z.object({
   position: z.object({
     x: z.number(),
@@ -31,6 +70,10 @@ const createAnnotationSchema = z.object({
     fileType: z.string(),
     fileSize: z.number(),
   })).optional(),
+  // Guest annotation support
+  guestName: z.string().optional(),
+  guestEmail: z.string().email().optional(),
+  guestToken: z.string().optional(),
 })
 
 export async function GET(
@@ -38,31 +81,91 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth()
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     const { id: assetId } = await params
+    const { searchParams } = new URL(request.url)
+    
+    // Extract query parameters
+    const guestToken = searchParams.get('guestToken')
+    const pageUrl = searchParams.get('pageUrl')
+    const status = searchParams.get('status') as 'OPEN' | 'RESOLVED' | null
+    const limit = parseInt(searchParams.get('limit') || '50')
+    const offset = parseInt(searchParams.get('offset') || '0')
+    const format = searchParams.get('format') // for export functionality
 
-    // Verify user has access to this asset through project ownership
-    const asset = await prisma.asset.findFirst({
-      where: {
-        id: assetId,
-        project: {
-          ownerId: session.user.id,
+    let asset
+    let isGuest = false
+
+    if (guestToken) {
+      // Guest access
+      asset = await prisma.asset.findFirst({
+        where: {
+          id: assetId,
+          project: {
+            shareToken: guestToken,
+            guestAccessEnabled: true,
+          },
         },
-      },
-    })
+        include: {
+          project: {
+            select: {
+              id: true,
+              name: true,
+              guestAccessEnabled: true,
+            }
+          }
+        }
+      })
+      isGuest = true
+    } else {
+      // Authenticated user access
+      const session = await auth()
+      if (!session?.user?.id) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+
+      asset = await prisma.asset.findFirst({
+        where: {
+          id: assetId,
+          project: {
+            OR: [
+              { ownerId: session.user.id },
+              { 
+                collaborators: {
+                  some: { userId: session.user.id }
+                }
+              }
+            ]
+          },
+        },
+        include: {
+          project: {
+            select: {
+              id: true,
+              name: true,
+              ownerId: true,
+            }
+          }
+        }
+      })
+    }
 
     if (!asset) {
       return NextResponse.json({ error: 'Asset not found' }, { status: 404 })
     }
 
+    // Build where clause for filtering
+    const whereClause: any = { assetId }
+    
+    if (pageUrl) {
+      whereClause.pageUrl = pageUrl
+    }
+    
+    if (status) {
+      whereClause.status = status
+    }
+
     const annotations = await prisma.annotation.findMany({
-      where: {
-        assetId,
-      },
+      where: whereClause,
       include: {
         author: {
           select: {
@@ -89,11 +192,51 @@ export async function GET(
             createdAt: 'asc',
           },
         },
+        mentions: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              }
+            }
+          }
+        }
       },
       orderBy: {
         createdAt: 'desc',
       },
+      take: limit,
+      skip: offset,
     })
+
+    // Handle export format
+    if (format === 'json') {
+      return NextResponse.json({
+        annotations,
+        meta: {
+          total: await prisma.annotation.count({ where: whereClause }),
+          limit,
+          offset,
+          asset: {
+            id: asset.id,
+            name: asset.name,
+            project: asset.project
+          }
+        }
+      })
+    }
+
+    if (format === 'csv') {
+      const csv = generateAnnotationCSV(annotations, asset)
+      return new NextResponse(csv, {
+        headers: {
+          'Content-Type': 'text/csv',
+          'Content-Disposition': `attachment; filename="annotations-${asset.name}.csv"`
+        }
+      })
+    }
 
     return NextResponse.json(annotations)
   } catch (error) {
@@ -110,50 +253,85 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth()
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     const { id: assetId } = await params
     const body = await request.json()
 
     // Validate request body
     const validatedData = createAnnotationSchema.parse(body)
 
-    // Verify user has access to this asset through project ownership
-    const asset = await prisma.asset.findFirst({
-      where: {
-        id: assetId,
-        project: {
-          ownerId: session.user.id,
+    let asset
+    let authorId: string | null = null
+    let isGuest = false
+
+    if (validatedData.guestToken) {
+      // Guest annotation
+      asset = await prisma.asset.findFirst({
+        where: {
+          id: assetId,
+          project: {
+            shareToken: validatedData.guestToken,
+            guestAccessEnabled: true,
+          },
         },
-      },
-    })
+      })
+      isGuest = true
+
+      if (!validatedData.guestName) {
+        return NextResponse.json({ error: 'Guest name is required' }, { status: 400 })
+      }
+    } else {
+      // Authenticated user annotation
+      const session = await auth()
+      if (!session?.user?.id) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+
+      authorId = session.user.id
+
+      asset = await prisma.asset.findFirst({
+        where: {
+          id: assetId,
+          project: {
+            OR: [
+              { ownerId: session.user.id },
+              { 
+                collaborators: {
+                  some: { userId: session.user.id }
+                }
+              }
+            ]
+          },
+        },
+      })
+
+      // Check annotation limit for authenticated users
+      if (asset) {
+        const limitCheck = await checkAnnotationLimit(session.user.id, asset.projectId);
+        if (!limitCheck.canCreate) {
+          return NextResponse.json(
+            { 
+              error: "Annotation limit reached",
+              limit: limitCheck.limit,
+              currentCount: limitCheck.currentCount,
+              plan: limitCheck.plan,
+              upgradeRequired: true
+            },
+            { status: 403 }
+          );
+        }
+      }
+    }
 
     if (!asset) {
       return NextResponse.json({ error: 'Asset not found' }, { status: 404 })
     }
 
-    // Check annotation limit
-    const limitCheck = await checkAnnotationLimit(session.user.id, asset.projectId);
-    if (!limitCheck.canCreate) {
-      return NextResponse.json(
-        { 
-          error: "Annotation limit reached",
-          limit: limitCheck.limit,
-          currentCount: limitCheck.currentCount,
-          plan: limitCheck.plan,
-          upgradeRequired: true
-        },
-        { status: 403 }
-      );
-    }
-
     const annotation = await prisma.annotation.create({
       data: {
         assetId,
-        authorId: session.user.id,
+        authorId,
+        guestName: validatedData.guestName,
+        guestEmail: validatedData.guestEmail,
         position: validatedData.position,
         content: validatedData.content,
         screenshot: validatedData.screenshot,
@@ -198,7 +376,7 @@ export async function POST(
     await RealtimeService.broadcastAnnotationCreated(assetId, {
       ...annotation,
       assetId,
-      authorId: session.user.id,
+      authorId: authorId || 'guest',
       createdAt: annotation.createdAt.toISOString(),
       updatedAt: annotation.updatedAt.toISOString(),
       position: annotation.position as { x: number; y: number; width?: number; height?: number },
