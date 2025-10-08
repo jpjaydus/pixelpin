@@ -7,7 +7,10 @@
     "build": "prisma generate && next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test:deployment": "node scripts/run-deployment-tests.js",
+    "test:deployment:simple": "node scripts/simple-deployment-check.js",
+    "test:quick": "node -e \"require('./src/lib/comprehensive-testing.js').quickDeploymentCheck().then(r => console.log(JSON.stringify(r, null, 2)))\""
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",

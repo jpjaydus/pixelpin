@@ -282,10 +282,14 @@ export function initializeDeployment() {
   // Initialize performance monitoring
   const performanceMonitor = PerformanceMonitor.getInstance()
   
-  // Monitor page load time
-  if (performance.timing) {
-    const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart
-    performanceMonitor.recordMetric('page_load_time', loadTime)
+  // Monitor page load time using modern Performance API
+  if (performance.getEntriesByType) {
+    const navigationEntries = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[]
+    if (navigationEntries.length > 0) {
+      const navigation = navigationEntries[0]
+      const loadTime = navigation.loadEventEnd - navigation.fetchStart
+      performanceMonitor.recordMetric('page_load_time', loadTime)
+    }
   }
 
   // Preload critical resources

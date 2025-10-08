@@ -148,25 +148,26 @@ export function useErrorHandler() {
     error: Error | AppError,
     errorInfo?: { componentStack?: string }
   ) => {
-    if ('type' in error) {
+    if (error && typeof error === 'object' && 'type' in error) {
       // Already an AppError
-      return error
+      return error as AppError
     }
 
     // Convert regular Error to AppError
     let type = ErrorType.CLIENT
+    const errorObj = error as Error
 
     // Classify error based on message or other properties
-    if (error.message.includes('fetch')) {
+    if (errorObj.message?.includes('fetch')) {
       type = ErrorType.NETWORK
-    } else if (error.message.includes('Unauthorized')) {
+    } else if (errorObj.message?.includes('Unauthorized')) {
       type = ErrorType.AUTHENTICATION
-    } else if (error.message.includes('Forbidden')) {
+    } else if (errorObj.message?.includes('Forbidden')) {
       type = ErrorType.AUTHORIZATION
     }
 
-    return errorHandler.createError(type, error.message, {
-      details: { stack: error.stack, componentStack: errorInfo?.componentStack }
+    return errorHandler.createError(type, errorObj.message || 'Unknown error', {
+      details: { stack: errorObj.stack, componentStack: errorInfo?.componentStack }
     })
   }
 

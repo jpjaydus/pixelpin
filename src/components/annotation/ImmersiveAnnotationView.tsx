@@ -352,33 +352,38 @@ export function ImmersiveAnnotationView({
           <AnnotationSidebar
             isCollapsed={sidebarCollapsed}
             onToggleCollapse={handleSidebarCollapse}
-            annotations={annotations as unknown as Array<{
-              id: string
-              content: string
-              status: 'OPEN' | 'RESOLVED'
-              createdAt: string
-              screenshot: string
-              pageUrl: string
-              metadata: Record<string, unknown>
-              position: { x: number; y: number }
-              author?: { 
-                id: string
-                name: string | null
-                email: string
-                password: string | null
-                emailVerified: Date | null
-                image: string | null
-                createdAt: Date
-                updatedAt: Date
-                stripeCustomerId: string | null
-                stripeSubscriptionId: string | null
-                stripePriceId: string | null
-                stripeCurrentPeriodEnd: Date | null
-              } | null
-              guestName?: string | null
-              guestEmail?: string | null
-              replies?: unknown[]
-            }>}
+            annotations={annotations.map(ann => ({
+              ...ann,
+              author: ann.author ? {
+                ...ann.author,
+                name: ann.author.name || null,
+                image: ann.author.image || null,
+                password: null,
+                emailVerified: null,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                stripeCustomerId: null,
+                stripeSubscriptionId: null,
+                stripePriceId: null,
+                stripeCurrentPeriodEnd: null
+              } : null,
+              replies: (ann.replies || []).map((reply: { id: string; content: string; authorId: string; createdAt: string; author: { id: string; name: string; email: string } }) => ({
+                ...reply,
+                author: reply.author ? {
+                  ...reply.author,
+                  name: reply.author.name || null,
+                  image: reply.author.image || null,
+                  password: null,
+                  emailVerified: null,
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                  stripeCustomerId: null,
+                  stripeSubscriptionId: null,
+                  stripePriceId: null,
+                  stripeCurrentPeriodEnd: null
+                } : null
+              }))
+            }))}
             selectedAnnotation={selectedAnnotation}
             onAnnotationSelect={setSelectedAnnotation}
             onAnnotationUpdate={updateAnnotation}

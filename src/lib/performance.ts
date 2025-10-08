@@ -128,7 +128,7 @@ export function filterAnnotations(
     const searchLower = filter.search.toLowerCase()
     filtered = filtered.filter(a => 
       a.content.toLowerCase().includes(searchLower) ||
-      (a.author?.name || a.guestName || '').toLowerCase().includes(searchLower)
+      (a.guestName || '').toLowerCase().includes(searchLower)
     )
   }
 
