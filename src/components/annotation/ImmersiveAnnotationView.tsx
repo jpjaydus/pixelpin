@@ -11,7 +11,8 @@ import { AnnotationSidebar } from './AnnotationSidebar'
 import { useAnnotations } from '@/hooks/useAnnotations'
 import { captureScreenshot } from '@/lib/screenshot'
 import { collectBrowserMetadata } from '@/lib/browser-metadata'
-import { saveUrlState, loadUrlState, hasNavigatedFromBase, getPathFromUrl } from '@/lib/url-state'
+import { saveUrlState, loadUrlState } from '@/lib/url-state'
+import { useUrlContext } from '@/hooks/useUrlContext'
 
 export type ViewportType = 'DESKTOP' | 'TABLET' | 'MOBILE'
 export type AnnotationMode = 'COMMENT' | 'BROWSE'
@@ -47,10 +48,33 @@ export function ImmersiveAnnotationView({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [currentMode, setCurrentMode] = useState<AnnotationMode>(savedState?.mode || 'COMMENT')
   const [currentViewport, setCurrentViewport] = useState<ViewportType>(savedState?.viewport || 'DESKTOP')
-  const [currentUrl, setCurrentUrl] = useState(savedState?.currentUrl || asset.url)
   const [selectedAnnotation, setSelectedAnnotation] = useState<string>()
   
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  
+  // URL context management
+  const {
+    currentUrl,
+    currentContext,
+    history: urlHistory,
+    isAtBaseUrl,
+    canAccessContent,
+    isValidUrl,
+    error: urlError,
+    setCurrentUrl,
+    getBreadcrumb
+  } = useUrlContext({
+    baseUrl: savedState?.currentUrl || asset.url,
+    onUrlChange: (url, context) => {
+      // Save state when URL changes
+      saveUrlState(asset.id, {
+        currentUrl: url,
+        mode: currentMode,
+        viewport: currentViewport
+      })
+    },
+    trackingEnabled: currentMode === 'BROWSE'
+  })
   
   const {
     annotations,
@@ -103,13 +127,7 @@ export function ImmersiveAnnotationView({
 
   const handleUrlChange = useCallback((newUrl: string) => {
     setCurrentUrl(newUrl)
-    // Save state when URL changes
-    saveUrlState(asset.id, {
-      currentUrl: newUrl,
-      mode: currentMode,
-      viewport: currentViewport
-    })
-  }, [asset.id, currentMode, currentViewport])
+  }, [setCurrentUrl])
 
   const handleToggleSidebar = useCallback(() => {
     setShowSidebar(!showSidebar)
@@ -136,9 +154,23 @@ export function ImmersiveAnnotationView({
             {project.name}
           </span>
           {/* Current URL indicator */}
-          {hasNavigatedFromBase(asset.url, currentUrl) && (
-            <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-              Navigated to: {getPathFromUrl(currentUrl)}
+          {!isAtBaseUrl && (
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                Navigated to: {currentContext.path}
+              </span>
+              {!canAccessContent && (
+                <span className="text-xs text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full" title="Limited URL tracking due to cross-origin restrictions">
+                  ⚠️ Limited tracking
+                </span>
+              )}
+            </div>
+          )}
+          
+          {/* URL Error indicator */}
+          {urlError && (
+            <span className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full">
+              ⚠️ {urlError}
             </span>
           )}
         </div>
@@ -196,6 +228,7 @@ export function ImmersiveAnnotationView({
             selectedAnnotation={selectedAnnotation}
             currentPageUrl={currentUrl}
             viewport={currentViewport}
+            iframeRef={iframeRef}
           />
         </div>
 

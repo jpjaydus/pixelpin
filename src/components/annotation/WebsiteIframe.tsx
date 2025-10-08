@@ -22,10 +22,23 @@ export const WebsiteIframe = forwardRef<HTMLIFrameElement, WebsiteIframeProps>(
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string>()
     const [currentUrl, setCurrentUrl] = useState(url)
+    const [loadAttempts, setLoadAttempts] = useState(0)
+    const [canAccessContent, setCanAccessContent] = useState(true)
+
+    const validateUrl = (urlToValidate: string): boolean => {
+      try {
+        const urlObj = new URL(urlToValidate)
+        // Check for valid protocols
+        return ['http:', 'https:'].includes(urlObj.protocol)
+      } catch {
+        return false
+      }
+    }
 
     const handleLoad = () => {
       setIsLoading(false)
       setError(undefined)
+      setLoadAttempts(0)
       onLoad()
 
       // Try to track URL changes in Browse mode
@@ -37,8 +50,10 @@ export const WebsiteIframe = forwardRef<HTMLIFrameElement, WebsiteIframeProps>(
             setCurrentUrl(iframeUrl)
             onUrlChange(iframeUrl)
           }
-        } catch (error) {
+          setCanAccessContent(true)
+        } catch (crossOriginError) {
           // Cross-origin restrictions prevent URL access
+          setCanAccessContent(false)
           console.warn('Cannot access iframe URL due to cross-origin restrictions')
         }
       }
@@ -46,13 +61,34 @@ export const WebsiteIframe = forwardRef<HTMLIFrameElement, WebsiteIframeProps>(
 
     const handleError = () => {
       setIsLoading(false)
-      setError('Failed to load website. This may be due to security restrictions.')
+      setLoadAttempts(prev => prev + 1)
+      
+      if (loadAttempts < 2) {
+        setError('Failed to load website. Retrying...')
+        // Auto-retry after a short delay
+        setTimeout(() => {
+          setIsLoading(true)
+          setError(undefined)
+          if (ref && 'current' in ref && ref.current) {
+            ref.current.src = url
+          }
+        }, 2000)
+      } else {
+        setError('Unable to load website. This may be due to security restrictions or the website blocking iframe embedding.')
+      }
     }
 
     useEffect(() => {
+      if (!validateUrl(url)) {
+        setIsLoading(false)
+        setError('Invalid URL format. Please provide a valid HTTP or HTTPS URL.')
+        return
+      }
+      
       setIsLoading(true)
       setError(undefined)
       setCurrentUrl(url)
+      setLoadAttempts(0)
     }, [url])
 
     // Set up URL tracking for Browse mode
@@ -67,14 +103,41 @@ export const WebsiteIframe = forwardRef<HTMLIFrameElement, WebsiteIframeProps>(
               setCurrentUrl(iframeUrl)
               onUrlChange(iframeUrl)
             }
-          } catch (error) {
-            // Silently handle cross-origin restrictions
+          } catch (crossOriginError) {
+            // Try to detect navigation through other means
+            try {
+              // Check if iframe document has changed
+              const iframeDoc = iframe.contentDocument
+              if (iframeDoc && iframeDoc.readyState === 'complete') {
+                const title = iframeDoc.title
+                if (title && title !== document.title) {
+                  // URL likely changed but we can't access it
+                  console.log('Navigation detected but URL not accessible due to cross-origin restrictions')
+                }
+              }
+            } catch (docError) {
+              // Silently handle cross-origin restrictions
+            }
           }
         }
 
         // Check for URL changes periodically in Browse mode
         const interval = setInterval(checkUrlChange, 1000)
-        return () => clearInterval(interval)
+        
+        // Also listen for iframe navigation events
+        const handleMessage = (event: MessageEvent) => {
+          // Listen for postMessage from iframe if the site supports it
+          if (event.source === iframe.contentWindow && event.data.type === 'navigation') {
+            onUrlChange(event.data.url)
+          }
+        }
+        
+        window.addEventListener('message', handleMessage)
+        
+        return () => {
+          clearInterval(interval)
+          window.removeEventListener('message', handleMessage)
+        }
       }
     }, [mode, currentUrl, onUrlChange, ref])
 
@@ -101,12 +164,34 @@ export const WebsiteIframe = forwardRef<HTMLIFrameElement, WebsiteIframeProps>(
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">Unable to Load Website</h3>
               <p className="text-sm text-gray-600 mb-4">{error}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
-                Try Again
-              </button>
+              <div className="space-y-2">
+                <button
+                  onClick={() => {
+                    setIsLoading(true)
+                    setError(undefined)
+                    setLoadAttempts(0)
+                    if (ref && 'current' in ref && ref.current) {
+                      ref.current.src = url
+                    }
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors mr-2"
+                >
+                  Try Again
+                </button>
+                <button
+                  onClick={() => window.open(url, '_blank')}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                >
+                  Open in New Tab
+                </button>
+              </div>
+              {!canAccessContent && (
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                  <p className="text-xs text-yellow-800">
+                    <strong>Note:</strong> This website restricts iframe embedding. URL tracking may be limited in Browse mode.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -142,8 +227,10 @@ export const WebsiteIframe = forwardRef<HTMLIFrameElement, WebsiteIframeProps>(
               }}
               onLoad={handleLoad}
               onError={handleError}
-              sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
+              sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation"
               title="Website Preview"
+              referrerPolicy="strict-origin-when-cross-origin"
+              loading="lazy"
             />
           </div>
         </div>
