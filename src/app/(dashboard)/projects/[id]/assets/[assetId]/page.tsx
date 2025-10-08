@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { ArrowLeft, Loader2 } from 'lucide-react'
@@ -263,6 +263,13 @@ export default function AssetViewerPage() {
     const members = getPresenceMembers()
     setOnlineUsers(members)
   }, [getPresenceMembers])
+
+  // Redirect URL assets to immersive annotation interface
+  useEffect(() => {
+    if (asset && asset.type === 'URL') {
+      router.replace(`/annotation/${projectId}/${assetId}`)
+    }
+  }, [asset, projectId, assetId, router])
 
   if (assetLoading || annotationsLoading) {
     return (

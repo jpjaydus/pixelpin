@@ -3,24 +3,26 @@ import { pusherServer, PUSHER_EVENTS, getAssetChannel } from './pusher'
 export interface AnnotationEvent {
   id: string
   assetId: string
-  authorId: string
+  authorId: string | null
   position: {
     x: number
     y: number
-    width?: number
-    height?: number
   }
   content: string
-  type: 'COMMENT' | 'RECTANGLE' | 'ARROW' | 'TEXT'
   status: 'OPEN' | 'RESOLVED'
   createdAt: string
   updatedAt: string
+  screenshot: string
+  pageUrl: string
+  metadata: any
+  guestName?: string | null
+  guestEmail?: string | null
   author: {
     id: string
     name: string | null
     email: string
     image: string | null
-  }
+  } | null
 }
 
 export interface ReplyEvent {

@@ -1,0 +1,155 @@
+'use client'
+
+import { forwardRef, useEffect, useState } from 'react'
+import { ViewportType, AnnotationMode } from './ImmersiveAnnotationView'
+
+interface WebsiteIframeProps {
+  url: string
+  viewport: ViewportType
+  mode: AnnotationMode
+  onLoad: () => void
+  onUrlChange: (newUrl: string) => void
+}
+
+const viewportWidths = {
+  DESKTOP: '100%',
+  TABLET: '768px',
+  MOBILE: '390px'
+}
+
+export const WebsiteIframe = forwardRef<HTMLIFrameElement, WebsiteIframeProps>(
+  ({ url, viewport, mode, onLoad, onUrlChange }, ref) => {
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string>()
+    const [currentUrl, setCurrentUrl] = useState(url)
+
+    const handleLoad = () => {
+      setIsLoading(false)
+      setError(undefined)
+      onLoad()
+
+      // Try to track URL changes in Browse mode
+      if (mode === 'BROWSE' && ref && 'current' in ref && ref.current) {
+        try {
+          const iframe = ref.current
+          const iframeUrl = iframe.contentWindow?.location.href
+          if (iframeUrl && iframeUrl !== currentUrl) {
+            setCurrentUrl(iframeUrl)
+            onUrlChange(iframeUrl)
+          }
+        } catch (error) {
+          // Cross-origin restrictions prevent URL access
+          console.warn('Cannot access iframe URL due to cross-origin restrictions')
+        }
+      }
+    }
+
+    const handleError = () => {
+      setIsLoading(false)
+      setError('Failed to load website. This may be due to security restrictions.')
+    }
+
+    useEffect(() => {
+      setIsLoading(true)
+      setError(undefined)
+      setCurrentUrl(url)
+    }, [url])
+
+    // Set up URL tracking for Browse mode
+    useEffect(() => {
+      if (mode === 'BROWSE' && ref && 'current' in ref && ref.current) {
+        const iframe = ref.current
+        
+        const checkUrlChange = () => {
+          try {
+            const iframeUrl = iframe.contentWindow?.location.href
+            if (iframeUrl && iframeUrl !== currentUrl) {
+              setCurrentUrl(iframeUrl)
+              onUrlChange(iframeUrl)
+            }
+          } catch (error) {
+            // Silently handle cross-origin restrictions
+          }
+        }
+
+        // Check for URL changes periodically in Browse mode
+        const interval = setInterval(checkUrlChange, 1000)
+        return () => clearInterval(interval)
+      }
+    }, [mode, currentUrl, onUrlChange, ref])
+
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-gray-100">
+        {/* Loading State */}
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 z-10">
+            <div className="flex flex-col items-center space-y-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <p className="text-sm text-gray-600">Loading website...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 z-10">
+            <div className="text-center max-w-md mx-auto p-6">
+              <div className="w-12 h-12 mx-auto mb-4 text-red-500">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Unable to Load Website</h3>
+              <p className="text-sm text-gray-600 mb-4">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Iframe Container with Viewport Control */}
+        <div className="h-full viewport-container mx-auto flex justify-center items-center">
+          <div
+            className={`
+              h-full bg-white relative
+              ${viewport === 'DESKTOP' ? 'viewport-desktop' : ''}
+              ${viewport === 'TABLET' ? 'viewport-tablet' : ''}
+              ${viewport === 'MOBILE' ? 'viewport-mobile' : ''}
+              viewport-transition
+            `}
+            style={{ 
+              width: viewportWidths[viewport],
+              maxWidth: '100%'
+            }}
+          >
+            {/* Viewport Indicator */}
+            {viewport !== 'DESKTOP' && (
+              <div className="viewport-indicator">
+                {viewport === 'TABLET' ? '768×1024' : '390×844'}
+              </div>
+            )}
+            
+            <iframe
+              ref={ref}
+              src={url}
+              className="w-full h-full border-0 bg-white"
+              style={{
+                borderRadius: viewport !== 'DESKTOP' ? (viewport === 'MOBILE' ? '12px' : '8px') : '0'
+              }}
+              onLoad={handleLoad}
+              onError={handleError}
+              sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
+              title="Website Preview"
+            />
+          </div>
+        </div>
+      </div>
+    )
+  }
+)
+
+WebsiteIframe.displayName = 'WebsiteIframe'

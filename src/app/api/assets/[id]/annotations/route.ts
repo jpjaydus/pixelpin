@@ -9,11 +9,21 @@ const createAnnotationSchema = z.object({
   position: z.object({
     x: z.number(),
     y: z.number(),
-    width: z.number().optional(),
-    height: z.number().optional(),
   }),
-  content: z.string().min(1),
-  type: z.enum(['COMMENT', 'RECTANGLE', 'ARROW', 'TEXT']),
+  content: z.string(),
+  screenshot: z.string().url(),
+  pageUrl: z.string().url(),
+  metadata: z.object({
+    browserName: z.string(),
+    browserVersion: z.string(),
+    operatingSystem: z.string(),
+    viewportSize: z.object({
+      width: z.number(),
+      height: z.number(),
+    }),
+    userAgent: z.string(),
+    timestamp: z.string(),
+  }),
 })
 
 export async function GET(
@@ -137,7 +147,9 @@ export async function POST(
         authorId: session.user.id,
         position: validatedData.position,
         content: validatedData.content,
-        type: validatedData.type,
+        screenshot: validatedData.screenshot,
+        pageUrl: validatedData.pageUrl,
+        metadata: validatedData.metadata,
       },
       include: {
         author: {
