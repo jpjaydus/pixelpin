@@ -82,7 +82,7 @@ export async function PATCH(
 
       // Broadcast deletion events
       for (const annotationId of annotationIds) {
-        await RealtimeService.broadcastAnnotationDeleted(assetId, { id: annotationId })
+        await RealtimeService.broadcastAnnotationDeleted(assetId, annotationId)
       }
 
     } else {
@@ -137,6 +137,7 @@ export async function PATCH(
           createdAt: annotation.createdAt.toISOString(),
           updatedAt: annotation.updatedAt.toISOString(),
           position: annotation.position as { x: number; y: number; width?: number; height?: number },
+          metadata: (annotation.metadata as Record<string, unknown>) || {},
         })
       }
     }

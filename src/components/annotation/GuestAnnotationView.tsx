@@ -62,7 +62,12 @@ export function GuestAnnotationView({
         asset={selectedAsset}
         project={{
           ...project,
-          collaborators: [] // Guests don't see collaborators
+          collaborators: [], // Guests don't see collaborators
+          owner: {
+            ...project.owner,
+            name: project.owner.name || null,
+            image: null // Guests don't see owner images
+          }
         }}
         currentUser={{
           id: 'guest',
@@ -270,7 +275,7 @@ function GuestProjectView({ project, onAssetSelect, guestInfo }: GuestProjectVie
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No assets yet</h3>
-            <p className="text-gray-500">This project doesn't have any assets to review.</p>
+            <p className="text-gray-500">This project doesn&apos;t have any assets to review.</p>
           </div>
         )}
       </div>

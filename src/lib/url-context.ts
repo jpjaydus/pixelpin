@@ -57,7 +57,7 @@ export async function validateUrlAccessibility(url: string): Promise<{
       isValid: true,
       canEmbed: true
     }
-  } catch (error) {
+  } catch {
     return {
       isValid: false,
       canEmbed: false,
@@ -79,7 +79,7 @@ export function extractUrlContext(url: string, title?: string): UrlContext {
       title,
       timestamp: new Date().toISOString()
     }
-  } catch (error) {
+  } catch {
     return {
       url,
       domain: 'unknown',
@@ -101,7 +101,7 @@ export function isSamePage(url1: string, url2: string): boolean {
     return urlObj1.origin === urlObj2.origin &&
            urlObj1.pathname === urlObj2.pathname &&
            urlObj1.search === urlObj2.search
-  } catch (error) {
+  } catch {
     return url1 === url2
   }
 }
@@ -121,7 +121,7 @@ export function getDisplayPath(url: string): string {
     const urlObj = new URL(url)
     const path = urlObj.pathname + urlObj.search + urlObj.hash
     return path === '/' ? '/' : path
-  } catch (error) {
+  } catch {
     return url
   }
 }
@@ -133,7 +133,7 @@ export function getDisplayDomain(url: string): string {
   try {
     const urlObj = new URL(url)
     return urlObj.hostname
-  } catch (error) {
+  } catch {
     return url
   }
 }
@@ -237,8 +237,8 @@ export class UrlMatcher {
    */
   static matches(url: string, pattern: string): boolean {
     try {
-      const urlObj = new URL(url)
-      const patternObj = new URL(pattern)
+      new URL(url) // Validate URL format
+      new URL(pattern) // Validate pattern format
 
       // Exact match
       if (url === pattern) return true
@@ -253,7 +253,7 @@ export class UrlMatcher {
       }
 
       return false
-    } catch (error) {
+    } catch {
       return url === pattern
     }
   }

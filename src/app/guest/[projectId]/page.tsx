@@ -1,4 +1,4 @@
-import { notFound, redirect } from 'next/navigation'
+// import { notFound } from 'next/navigation' // Unused for now
 import { prisma } from '@/lib/prisma'
 import { GuestAnnotationView } from '@/components/annotation/GuestAnnotationView'
 
@@ -42,7 +42,8 @@ export default async function GuestProjectPage({
           select: {
             id: true,
             name: true,
-            email: true
+            email: true,
+            image: true
           }
         },
         assets: {
@@ -124,7 +125,7 @@ export async function generateMetadata({
       title: `${project.name} - PixelPin Guest Access`,
       description: project.description || `Review and comment on ${project.name}`
     }
-  } catch (error) {
+  } catch {
     return {
       title: 'Project - PixelPin Guest Access'
     }

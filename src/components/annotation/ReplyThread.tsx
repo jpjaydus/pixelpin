@@ -111,7 +111,7 @@ export function ReplyThread({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-      handleSubmitReply(e as any)
+      handleSubmitReply(e as React.FormEvent)
     } else if (e.key === 'Escape') {
       setShowReplyForm(false)
       setReplyContent('')

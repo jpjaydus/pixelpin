@@ -91,7 +91,7 @@ export function AnnotationForm({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-      handleSubmit(e as any)
+      handleSubmit(e as React.FormEvent)
     } else if (e.key === 'Escape') {
       onCancel()
     }

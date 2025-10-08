@@ -41,7 +41,7 @@ export function GuestAccessModal({
 
       await onUpdate({
         guestAccessEnabled: newEnabled,
-        shareToken: newEnabled ? shareToken : undefined
+        shareToken: newEnabled ? (shareToken || undefined) : undefined
       })
 
       setGuestAccessEnabled(newEnabled)

@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
 export async function deliverWebhook(
   webhookUrl: string,
   event: string,
-  payload: any,
+  payload: Record<string, unknown>,
   secret?: string
 ) {
   try {
@@ -137,7 +137,7 @@ export async function deliverWebhook(
 
     // Add signature if secret is provided
     if (secret) {
-      const crypto = require('crypto')
+      const crypto = await import('crypto')
       const signature = crypto
         .createHmac('sha256', secret)
         .update(body)

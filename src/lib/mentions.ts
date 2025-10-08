@@ -92,7 +92,7 @@ export async function sendMentionNotifications(
     for (const user of users) {
       console.log(`Mention notification for ${user.email}:`, {
         context,
-        mentionedBy: context?.author || (context as any)?.annotation?.author
+        mentionedBy: context?.author || (context as Record<string, unknown>)?.annotation?.author
       })
       
       // TODO: Send email notification

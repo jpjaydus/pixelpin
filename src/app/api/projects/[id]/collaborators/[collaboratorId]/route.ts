@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
 const updateCollaboratorSchema = z.object({
-  role: z.enum(['VIEWER', 'EDITOR', 'ADMIN']),
+  role: z.enum(['OWNER', 'EDITOR']),
 })
 
 export async function PATCH(
@@ -31,7 +31,7 @@ export async function PATCH(
             collaborators: {
               some: { 
                 userId: session.user.id,
-                role: 'ADMIN'
+                role: 'OWNER'
               }
             }
           }
@@ -117,7 +117,7 @@ export async function DELETE(
             collaborators: {
               some: { 
                 userId: session.user.id,
-                role: 'ADMIN'
+                role: 'OWNER'
               }
             }
           }

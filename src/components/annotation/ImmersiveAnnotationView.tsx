@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { Asset, Project, User } from '@prisma/client'
+import { Asset, Project } from '@prisma/client'
 import { FocusModeLayout } from './FocusModeLayout'
 import { AnnotationModeToggle } from './AnnotationModeToggle'
 import { ViewportControls } from './ViewportControls'
@@ -20,9 +20,19 @@ export type ViewportType = 'DESKTOP' | 'TABLET' | 'MOBILE'
 export type AnnotationMode = 'COMMENT' | 'BROWSE'
 
 interface ProjectWithCollaborators extends Project {
-  owner: User
+  owner: {
+    id: string
+    name: string | null
+    email: string
+    image: string | null
+  }
   collaborators: Array<{
-    user: User
+    user: {
+      id: string
+      name: string | null
+      email: string
+      image: string | null
+    }
     role: string
   }>
 }
@@ -175,7 +185,7 @@ export function ImmersiveAnnotationView({
         content: '', // Will be filled in by the annotation form
         screenshot: screenshotResult.url,
         pageUrl: currentUrl,
-        metadata
+        metadata: metadata as unknown as Record<string, unknown>
       })
 
       // Auto-select the newly created annotation
@@ -332,7 +342,7 @@ export function ImmersiveAnnotationView({
             selectedAnnotation={selectedAnnotation}
             currentPageUrl={currentUrl}
             viewport={currentViewport}
-            iframeRef={iframeRef}
+            iframeRef={iframeRef as React.RefObject<HTMLIFrameElement>}
             onCursorMove={broadcastCursorMove}
           />
         </div>
@@ -342,7 +352,33 @@ export function ImmersiveAnnotationView({
           <AnnotationSidebar
             isCollapsed={sidebarCollapsed}
             onToggleCollapse={handleSidebarCollapse}
-            annotations={annotations}
+            annotations={annotations as unknown as Array<{
+              id: string
+              content: string
+              status: 'OPEN' | 'RESOLVED'
+              createdAt: string
+              screenshot: string
+              pageUrl: string
+              metadata: Record<string, unknown>
+              position: { x: number; y: number }
+              author?: { 
+                id: string
+                name: string | null
+                email: string
+                password: string | null
+                emailVerified: Date | null
+                image: string | null
+                createdAt: Date
+                updatedAt: Date
+                stripeCustomerId: string | null
+                stripeSubscriptionId: string | null
+                stripePriceId: string | null
+                stripeCurrentPeriodEnd: Date | null
+              } | null
+              guestName?: string | null
+              guestEmail?: string | null
+              replies?: unknown[]
+            }>}
             selectedAnnotation={selectedAnnotation}
             onAnnotationSelect={setSelectedAnnotation}
             onAnnotationUpdate={updateAnnotation}

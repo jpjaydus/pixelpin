@@ -11,12 +11,18 @@ interface Annotation {
   createdAt: string
   screenshot: string
   pageUrl: string
-  metadata: any
+  metadata: Record<string, unknown>
   position: { x: number; y: number }
   author?: User | null
   guestName?: string | null
   guestEmail?: string | null
-  replies?: any[]
+  replies?: Array<{
+    id: string
+    content: string
+    authorId: string
+    createdAt: string
+    author: User
+  }>
 }
 
 interface AnnotationSidebarProps {

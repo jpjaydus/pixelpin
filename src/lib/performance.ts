@@ -29,7 +29,7 @@ export function createLazyLoader() {
 }
 
 // Debounce utility for search and filtering
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
@@ -47,7 +47,7 @@ export function debounce<T extends (...args: any[]) => any>(
 }
 
 // Throttle utility for scroll and resize events
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
   limit: number
 ): (...args: Parameters<T>) => void {
@@ -99,9 +99,16 @@ export interface AnnotationFilter {
 }
 
 export function filterAnnotations(
-  annotations: any[],
+  annotations: Array<{
+    id: string
+    pageUrl: string
+    status: string
+    authorId?: string
+    content: string
+    guestName?: string
+  }>,
   filter: AnnotationFilter
-): { filtered: any[]; total: number } {
+): { filtered: typeof annotations; total: number } {
   let filtered = [...annotations]
 
   // Apply filters
@@ -177,18 +184,18 @@ class SimpleCache<T> {
 }
 
 // Create cache instances
-export const annotationCache = new SimpleCache<any[]>(5) // 5 minutes
-export const projectCache = new SimpleCache<any>(10) // 10 minutes
-export const userCache = new SimpleCache<any>(15) // 15 minutes
+export const annotationCache = new SimpleCache<unknown[]>(5) // 5 minutes
+export const projectCache = new SimpleCache<unknown>(10) // 10 minutes
+export const userCache = new SimpleCache<unknown>(15) // 15 minutes
 
 // Real-time connection management
 export class ConnectionManager {
-  private connections = new Map<string, any>()
+  private connections = new Map<string, { disconnect?: () => void }>()
   private reconnectAttempts = new Map<string, number>()
   private maxReconnectAttempts = 5
   private reconnectDelay = 1000
 
-  addConnection(id: string, connection: any): void {
+  addConnection(id: string, connection: { disconnect?: () => void }): void {
     this.connections.set(id, connection)
     this.reconnectAttempts.set(id, 0)
   }
@@ -202,7 +209,7 @@ export class ConnectionManager {
     this.reconnectAttempts.delete(id)
   }
 
-  async reconnect(id: string, createConnection: () => Promise<any>): Promise<boolean> {
+  async reconnect(id: string, createConnection: () => Promise<{ disconnect?: () => void }>): Promise<boolean> {
     const attempts = this.reconnectAttempts.get(id) || 0
     
     if (attempts >= this.maxReconnectAttempts) {
@@ -225,7 +232,7 @@ export class ConnectionManager {
     }
   }
 
-  getConnection(id: string): any {
+  getConnection(id: string): { disconnect?: () => void } | undefined {
     return this.connections.get(id)
   }
 

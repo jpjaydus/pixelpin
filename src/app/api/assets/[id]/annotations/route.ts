@@ -6,7 +6,7 @@ import { checkAnnotationLimit } from '@/lib/subscription-limits'
 import { RealtimeService, AnnotationEvent } from '@/lib/realtime'
 
 // CSV export utility
-function generateAnnotationCSV(annotations: any[], asset: any): string {
+function generateAnnotationCSV(annotations: Array<Record<string, unknown>>, asset: { id: string; name: string }): string {
   const headers = [
     'ID',
     'Content',
@@ -26,19 +26,19 @@ function generateAnnotationCSV(annotations: any[], asset: any): string {
 
   const rows = annotations.map(annotation => [
     annotation.id,
-    `"${annotation.content.replace(/"/g, '""')}"`,
+    `"${String(annotation.content || '').replace(/"/g, '""')}"`,
     annotation.status,
-    annotation.author?.name || '',
-    annotation.author?.email || '',
+    (annotation.author as { name?: string } | null)?.name || '',
+    (annotation.author as { email?: string } | null)?.email || '',
     annotation.guestName || '',
     annotation.guestEmail || '',
     annotation.pageUrl,
-    annotation.position.x,
-    annotation.position.y,
+    (annotation.position as { x: number })?.x || 0,
+    (annotation.position as { y: number })?.y || 0,
     annotation.createdAt,
     annotation.updatedAt,
-    annotation.replies?.length || 0,
-    annotation.attachments?.length || 0
+    (annotation.replies as unknown[] | undefined)?.length || 0,
+    (annotation.attachments as unknown[] | undefined)?.length || 0
   ])
 
   return [headers.join(','), ...rows.map(row => row.join(','))].join('\n')
@@ -93,7 +93,6 @@ export async function GET(
     const format = searchParams.get('format') // for export functionality
 
     let asset
-    let isGuest = false
 
     if (guestToken) {
       // Guest access
@@ -115,7 +114,6 @@ export async function GET(
           }
         }
       })
-      isGuest = true
     } else {
       // Authenticated user access
       const session = await auth()
@@ -154,7 +152,7 @@ export async function GET(
     }
 
     // Build where clause for filtering
-    const whereClause: any = { assetId }
+    const whereClause: { assetId: string; pageUrl?: string; status?: 'OPEN' | 'RESOLVED' } = { assetId }
     
     if (pageUrl) {
       whereClause.pageUrl = pageUrl
@@ -261,7 +259,6 @@ export async function POST(
 
     let asset
     let authorId: string | null = null
-    let isGuest = false
 
     if (validatedData.guestToken) {
       // Guest annotation
@@ -274,7 +271,6 @@ export async function POST(
           },
         },
       })
-      isGuest = true
 
       if (!validatedData.guestName) {
         return NextResponse.json({ error: 'Guest name is required' }, { status: 400 })

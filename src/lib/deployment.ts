@@ -204,7 +204,7 @@ export function getHealthCheckData() {
 }
 
 // Error reporting for production
-export function reportError(error: Error, context?: Record<string, any>) {
+export function reportError(error: Error, context?: Record<string, unknown>) {
   if (DEPLOYMENT_CONFIG.isDevelopment) {
     console.error('Error:', error, context)
     return

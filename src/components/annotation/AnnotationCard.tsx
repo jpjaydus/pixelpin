@@ -16,7 +16,7 @@ interface AnnotationCardProps {
     createdAt: string
     screenshot: string
     pageUrl: string
-    metadata: any
+    metadata: Record<string, unknown>
     position: { x: number; y: number }
     author?: User | null
     guestName?: string | null
@@ -89,7 +89,21 @@ export function AnnotationCard({
     }
   }
 
-  const handleSave = async (data: { content: string; attachments?: any[] }) => {
+  const handleSave = async (data: { 
+    content: string; 
+    guestName?: string; 
+    guestEmail?: string; 
+    attachments?: Array<{ 
+      id: string; 
+      filename: string; 
+      url: string; 
+      mimeType?: string; 
+      size?: number;
+      fileType?: string;
+      fileSize?: number;
+    }>; 
+    mentions?: string[] 
+  }) => {
     await onUpdate({ content: data.content })
     setIsEditing(false)
   }
@@ -306,7 +320,7 @@ export function AnnotationCard({
         
         {showMetadata && (
           <div className="mt-2 text-xs text-gray-600 bg-gray-50 rounded p-2">
-            <p>{formatBrowserMetadata(annotation.metadata)}</p>
+            <p>{annotation.metadata ? formatBrowserMetadata(annotation.metadata as { browserName: string; browserVersion: string; operatingSystem: string; viewportSize: { width: number; height: number }; userAgent: string; timestamp: string }) : 'No metadata available'}</p>
             <p className="mt-1">Position: {annotation.position.x}, {annotation.position.y}</p>
           </div>
         )}

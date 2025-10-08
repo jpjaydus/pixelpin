@@ -55,7 +55,7 @@ export function getDomainFromUrl(url: string): string {
   try {
     const urlObj = new URL(url)
     return urlObj.hostname
-  } catch (error) {
+  } catch {
     return url
   }
 }
@@ -67,7 +67,7 @@ export function getPathFromUrl(url: string): string {
   try {
     const urlObj = new URL(url)
     return urlObj.pathname + urlObj.search + urlObj.hash
-  } catch (error) {
+  } catch {
     return url
   }
 }
@@ -81,7 +81,7 @@ export function hasNavigatedFromBase(baseUrl: string, currentUrl: string): boole
     const currentUrlObj = new URL(currentUrl)
     
     return baseUrlObj.href !== currentUrlObj.href
-  } catch (error) {
+  } catch {
     return baseUrl !== currentUrl
   }
 }

@@ -20,7 +20,7 @@ export interface AppError {
   type: ErrorType
   message: string
   code?: string
-  details?: any
+  details?: Record<string, unknown>
   timestamp: Date
   userMessage?: string
   recoverable?: boolean
@@ -44,7 +44,7 @@ export class ErrorHandler {
     message: string,
     options: {
       code?: string
-      details?: any
+      details?: Record<string, unknown>
       userMessage?: string
       recoverable?: boolean
       retryable?: boolean
@@ -155,7 +155,6 @@ export function useErrorHandler() {
 
     // Convert regular Error to AppError
     let type = ErrorType.CLIENT
-    let userMessage = error.message
 
     // Classify error based on message or other properties
     if (error.message.includes('fetch')) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { throttle } from '@/lib/performance'
 
 interface VirtualizedListProps<T> {

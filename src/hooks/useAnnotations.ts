@@ -13,7 +13,7 @@ interface Annotation {
   updatedAt: string
   screenshot: string
   pageUrl: string
-  metadata: any
+  metadata: Record<string, unknown>
   guestName?: string
   guestEmail?: string
   author?: {
@@ -21,9 +21,33 @@ interface Annotation {
     name: string
     email: string
   }
-  replies: any[]
-  attachments: any[]
-  mentions: any[]
+  replies: Array<{
+    id: string
+    content: string
+    authorId: string
+    createdAt: string
+    author: {
+      id: string
+      name: string
+      email: string
+    }
+  }>
+  attachments: Array<{
+    id: string
+    filename: string
+    url: string
+    mimeType: string
+    size: number
+  }>
+  mentions: Array<{
+    id: string
+    userId: string
+    user: {
+      id: string
+      name: string
+      email: string
+    }
+  }>
 }
 
 interface CreateAnnotationData {
@@ -31,9 +55,15 @@ interface CreateAnnotationData {
   content: string
   screenshot: string
   pageUrl: string
-  metadata: any
+  metadata: Record<string, unknown>
   mentions?: string[]
-  attachments?: any[]
+  attachments?: Array<{
+    id: string
+    filename: string
+    url: string
+    fileType: string
+    fileSize: number
+  }>
 }
 
 export function useAnnotations(assetId: string, currentUrl: string) {

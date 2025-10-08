@@ -77,7 +77,12 @@ export default async function ImmersiveAssetPage({
       <ImmersiveAnnotationView
         asset={asset}
         project={asset.project}
-        currentUser={session.user}
+        currentUser={{
+          id: session.user.id!,
+          name: session.user.name,
+          email: session.user.email,
+          image: session.user.image
+        }}
         isGuest={false}
       />
     )
@@ -115,7 +120,7 @@ export async function generateMetadata({
       title: `${asset.name} - ${asset.project.name} - PixelPin`,
       description: `Annotate and collaborate on ${asset.name}`
     }
-  } catch (error) {
+  } catch {
     return {
       title: 'Asset - PixelPin'
     }

@@ -14,7 +14,7 @@ export interface AnnotationEvent {
   updatedAt: string
   screenshot: string
   pageUrl: string
-  metadata: any
+  metadata: Record<string, unknown>
   guestName?: string | null
   guestEmail?: string | null
   author: {

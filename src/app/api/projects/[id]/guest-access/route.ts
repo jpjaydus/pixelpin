@@ -10,7 +10,7 @@ const updateGuestAccessSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth()
@@ -18,9 +18,11 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id: projectId } = await params
+    
     const project = await prisma.project.findFirst({
       where: {
-        id: params.id,
+        id: projectId,
         ownerId: session.user.id
       },
       select: {
@@ -47,7 +49,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth()
@@ -57,11 +59,12 @@ export async function PATCH(
 
     const body = await request.json()
     const { guestAccessEnabled, shareToken } = updateGuestAccessSchema.parse(body)
+    const { id: projectId } = await params
 
     // Verify project ownership
     const project = await prisma.project.findFirst({
       where: {
-        id: params.id,
+        id: projectId,
         ownerId: session.user.id
       }
     })
@@ -78,7 +81,7 @@ export async function PATCH(
 
     // Update project
     const updatedProject = await prisma.project.update({
-      where: { id: params.id },
+      where: { id: projectId },
       data: {
         guestAccessEnabled,
         shareToken: guestAccessEnabled ? finalShareToken : null

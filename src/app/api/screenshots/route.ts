@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
 
     // Upload to Vercel Blob
     const filename = `screenshots/screenshot-${Date.now()}-${Math.random().toString(36).substring(7)}.png`
-    const blob = await put(filename, optimizedBuffer, {
+    const blob = await put(filename, Buffer.from(optimizedBuffer), {
       access: 'public',
       contentType: 'image/png'
     })

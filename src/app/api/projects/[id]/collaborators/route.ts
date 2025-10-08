@@ -5,11 +5,11 @@ import { z } from 'zod'
 
 const addCollaboratorSchema = z.object({
   email: z.string().email(),
-  role: z.enum(['VIEWER', 'EDITOR', 'ADMIN']).default('VIEWER'),
+  role: z.enum(['OWNER', 'EDITOR']).default('EDITOR'),
 })
 
 const updateCollaboratorSchema = z.object({
-  role: z.enum(['VIEWER', 'EDITOR', 'ADMIN']),
+  role: z.enum(['OWNER', 'EDITOR']),
 })
 
 export async function GET(
@@ -34,7 +34,7 @@ export async function GET(
             collaborators: {
               some: { 
                 userId: session.user.id,
-                role: { in: ['ADMIN', 'EDITOR'] }
+                role: { in: ['OWNER', 'EDITOR'] }
               }
             }
           }
@@ -117,7 +117,7 @@ export async function POST(
             collaborators: {
               some: { 
                 userId: session.user.id,
-                role: 'ADMIN'
+                role: 'OWNER'
               }
             }
           }
