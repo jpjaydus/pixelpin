@@ -92,7 +92,7 @@ export async function sendMentionNotifications(
     for (const user of users) {
       console.log(`Mention notification for ${user.email}:`, {
         context,
-        mentionedBy: context?.author || context?.annotation?.author
+        mentionedBy: context?.author || (context as any)?.annotation?.author
       })
       
       // TODO: Send email notification
@@ -150,7 +150,7 @@ export async function getMentionsForUser(userId: string, limit = 20) {
       content: mention.annotation?.content || mention.reply?.content || '',
       createdAt: mention.createdAt,
       read: false, // TODO: Add read status to schema
-      project: mention.annotation?.asset.project || mention.reply?.annotation.asset.project
+      project: mention.annotation?.asset.project || mention.reply?.annotation?.asset.project
     }))
   } catch (error) {
     console.error('Failed to get mentions:', error)
