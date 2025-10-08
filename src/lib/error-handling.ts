@@ -220,7 +220,7 @@ export async function handleApiRequest<T>(
 
     return await response.json()
   } catch (error) {
-    if ('type' in error) {
+    if (error && typeof error === 'object' && 'type' in error) {
       throw error // Already handled
     }
 
@@ -229,7 +229,7 @@ export async function handleApiRequest<T>(
       ErrorType.NETWORK,
       'Network request failed',
       {
-        details: { originalError: error.message }
+        details: { originalError: error instanceof Error ? error.message : String(error) }
       }
     )
 

@@ -28,7 +28,7 @@ export function useUrlContext({
   onUrlChange,
   trackingEnabled = true
 }: UseUrlContextOptions): UseUrlContextReturn {
-  const historyManagerRef = useRef<UrlHistoryManager>()
+  const historyManagerRef = useRef<UrlHistoryManager | undefined>(undefined)
   const [currentUrl, setCurrentUrlState] = useState(baseUrl)
   const [currentContext, setCurrentContext] = useState<UrlContext>(() => ({
     url: baseUrl,
@@ -58,7 +58,7 @@ export function useUrlContext({
       setCanAccessContent(validation.canEmbed)
       setError(validation.error)
       return validation.isValid && validation.canEmbed
-    } catch (validationError) {
+    } catch {
       setIsValidUrl(false)
       setCanAccessContent(false)
       setError('Failed to validate URL')

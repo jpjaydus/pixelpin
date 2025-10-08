@@ -275,7 +275,7 @@ async function testSingleIframe(url: string): Promise<IframeTestResult> {
       // Test screenshot capture
       setTimeout(() => {
         try {
-          testScreenshotCapture(iframe)
+          testIframeScreenshotCapture(iframe)
           canCapture = true
         } catch (error) {
           if (error instanceof Error) {
@@ -297,7 +297,7 @@ async function testSingleIframe(url: string): Promise<IframeTestResult> {
           performanceMetrics: {
             loadTime,
             renderTime,
-            memoryUsage: (performance as any).memory?.usedJSHeapSize
+            memoryUsage: (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize
           }
         })
       }, 1000)
@@ -351,7 +351,7 @@ function testIframeScreenshotCapture(iframe: HTMLIFrameElement): void {
     }
 
     // Try to draw iframe content to canvas
-    ctx.drawImage(iframe as any, 0, 0)
+    ctx.drawImage(iframe as unknown as CanvasImageSource, 0, 0)
     
     // Try to get image data
     const imageData = canvas.toDataURL('image/png')
@@ -451,7 +451,7 @@ async function testSingleScreenshot(
       try {
         // Try HTML5 Canvas capture
         if (contentType !== 'cross-origin') {
-          ctx.drawImage(iframe as any, 0, 0)
+          ctx.drawImage(iframe as unknown as CanvasImageSource, 0, 0)
           crossOriginCapture = true
         } else {
           // Simulate cross-origin restriction

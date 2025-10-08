@@ -135,17 +135,9 @@ export function MentionNotifications({
           >
             <div className="flex items-start space-x-3">
               <div className="flex-shrink-0">
-                {notification.mentionedBy.image ? (
-                  <img
-                    src={notification.mentionedBy.image}
-                    alt={notification.mentionedBy.name || notification.mentionedBy.email}
-                    className="w-8 h-8 rounded-full"
-                  />
-                ) : (
-                  <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-sm">
-                    {(notification.mentionedBy.name || notification.mentionedBy.email).charAt(0).toUpperCase()}
-                  </div>
-                )}
+                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-sm">
+                  {(notification.mentionedBy.name || notification.mentionedBy.email).charAt(0).toUpperCase()}
+                </div>
               </div>
               
               <div className="flex-1 min-w-0">

@@ -170,7 +170,7 @@ export function measureCoreWebVitals(): Promise<PerformanceMetrics> {
       try {
         const lcpObserver = new PerformanceObserver((list) => {
           const entries = list.getEntries()
-          const lastEntry = entries[entries.length - 1] as any
+          const lastEntry = entries[entries.length - 1] as PerformanceEntry & { startTime: number }
           if (lastEntry) {
             metrics.largestContentfulPaint = lastEntry.startTime
           }
@@ -276,7 +276,7 @@ export function analyzeLoadingPerformance(): LoadingPerformance {
     other: 0
   }
 
-  resources.forEach(resource => {
+  resources.forEach((resource: PerformanceResourceTiming) => {
     const size = resource.transferSize || 0
     
     if (resource.name.includes('.js')) {

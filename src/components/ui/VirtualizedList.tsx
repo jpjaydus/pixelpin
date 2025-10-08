@@ -36,8 +36,9 @@ export function VirtualizedList<T>({
 
   // Throttled scroll handler
   const handleScroll = useMemo(
-    () => throttle((e: React.UIEvent<HTMLDivElement>) => {
-      setScrollTop(e.currentTarget.scrollTop)
+    () => throttle((e: unknown) => {
+      const event = e as React.UIEvent<HTMLDivElement>
+      setScrollTop(event.currentTarget.scrollTop)
     }, 16), // ~60fps
     []
   )

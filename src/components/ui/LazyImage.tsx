@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import Image from 'next/image'
 import { createLazyLoader } from '@/lib/performance'
 
 interface LazyImageProps {
@@ -59,10 +60,12 @@ export function LazyImage({
   }
 
   return (
-    <img
+    <Image
       ref={imgRef}
       src={placeholder}
       alt={alt}
+      width={200}
+      height={200}
       className={`transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-50'} ${className}`}
       onLoad={handleLoad}
       onError={handleError}

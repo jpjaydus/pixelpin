@@ -355,9 +355,10 @@ export function ImmersiveAnnotationView({
             annotations={annotations.map(ann => ({
               ...ann,
               author: ann.author ? {
-                ...ann.author,
+                id: ann.author.id,
+                email: ann.author.email,
                 name: ann.author.name || null,
-                image: ann.author.image || null,
+                image: null,
                 password: null,
                 emailVerified: null,
                 createdAt: new Date(),
@@ -366,13 +367,14 @@ export function ImmersiveAnnotationView({
                 stripeSubscriptionId: null,
                 stripePriceId: null,
                 stripeCurrentPeriodEnd: null
-              } : null,
+              } : undefined,
               replies: (ann.replies || []).map((reply: { id: string; content: string; authorId: string; createdAt: string; author: { id: string; name: string; email: string } }) => ({
                 ...reply,
-                author: reply.author ? {
-                  ...reply.author,
+                author: {
+                  id: reply.author.id,
+                  email: reply.author.email,
                   name: reply.author.name || null,
-                  image: reply.author.image || null,
+                  image: null,
                   password: null,
                   emailVerified: null,
                   createdAt: new Date(),
@@ -381,7 +383,7 @@ export function ImmersiveAnnotationView({
                   stripeSubscriptionId: null,
                   stripePriceId: null,
                   stripeCurrentPeriodEnd: null
-                } : null
+                }
               }))
             }))}
             selectedAnnotation={selectedAnnotation}
@@ -391,7 +393,7 @@ export function ImmersiveAnnotationView({
             onAddReply={addReply}
             onBulkUpdate={handleBulkUpdate}
             onBulkDelete={handleBulkDelete}
-            onNavigateToAnnotation={(id) => {
+            onNavigateToAnnotation={(id: string) => {
               setSelectedAnnotation(id)
               // Scroll to annotation pin
               const annotation = annotations.find(a => a.id === id)
@@ -403,8 +405,34 @@ export function ImmersiveAnnotationView({
                 }
               }
             }}
-            currentUser={currentUser}
-            projectCollaborators={project.collaborators?.map(c => c.user) || []}
+            currentUser={{
+              id: currentUser.id,
+              name: currentUser.name || null,
+              email: currentUser.email || '',
+              image: currentUser.image || null,
+              password: null,
+              emailVerified: null,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              stripeCustomerId: null,
+              stripeSubscriptionId: null,
+              stripePriceId: null,
+              stripeCurrentPeriodEnd: null
+            }}
+            projectCollaborators={project.collaborators?.map(c => ({
+              id: c.user.id,
+              name: c.user.name || null,
+              email: c.user.email,
+              image: c.user.image || null,
+              password: null,
+              emailVerified: null,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              stripeCustomerId: null,
+              stripeSubscriptionId: null,
+              stripePriceId: null,
+              stripeCurrentPeriodEnd: null
+            })) || []}
             currentPageUrl={currentUrl}
           />
         )}
