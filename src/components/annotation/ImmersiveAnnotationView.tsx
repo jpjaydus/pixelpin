@@ -60,7 +60,7 @@ export function ImmersiveAnnotationView({
   // Load saved state or use defaults
   const savedState = loadUrlState(asset.id)
   
-  const [showSidebar, setShowSidebar] = useState(true)
+  const [showSidebar, setShowSidebar] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [currentMode, setCurrentMode] = useState<AnnotationMode>('COMMENT')
   const [currentViewport, setCurrentViewport] = useState<ViewportType>('DESKTOP')

@@ -529,6 +529,8 @@ iewport Control Styles */
 iframe {
   transition: none !important;
   animation: none !important;
+  transform: none !important;
+  will-change: auto !important;
 }
 
 /* Ensure proper scrolling */
@@ -539,4 +541,27 @@ iframe {
 
 .immersive-container iframe {
   min-height: 100%;
+}
+
+/* Disable all transitions on viewport changes */
+.viewport-container * {
+  transition: none !important;
+}
+
+/* Stable iframe container */
+.iframe-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.iframe-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+  border: none;
+  outline: none;
 }

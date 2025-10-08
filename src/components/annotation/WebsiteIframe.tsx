@@ -203,14 +203,9 @@ export const WebsiteIframe = forwardRef<HTMLIFrameElement, WebsiteIframeProps>(
         )}
 
         {/* Iframe Container with Viewport Control */}
-        <div className="h-full w-full flex justify-center">
+        <div className="iframe-container">
           <div
-            className={`
-              h-full bg-white relative
-              ${viewport === 'DESKTOP' ? 'w-full' : ''}
-              ${viewport === 'TABLET' ? 'viewport-tablet' : ''}
-              ${viewport === 'MOBILE' ? 'viewport-mobile' : ''}
-            `}
+            className="h-full bg-white relative mx-auto"
             style={{ 
               width: viewport === 'DESKTOP' ? '100%' : viewportWidths[viewport],
               maxWidth: viewport === 'DESKTOP' ? '100%' : viewportWidths[viewport],
@@ -230,7 +225,7 @@ export const WebsiteIframe = forwardRef<HTMLIFrameElement, WebsiteIframeProps>(
               className="w-full h-full border-0 bg-white"
               style={{
                 borderRadius: viewport !== 'DESKTOP' ? (viewport === 'MOBILE' ? '12px' : '8px') : '0',
-                pointerEvents: 'auto'
+                pointerEvents: mode === 'COMMENT' ? 'none' : 'auto'
               }}
               onLoad={handleLoad}
               onError={handleError}
